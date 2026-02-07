@@ -1,9 +1,10 @@
 from typing import Tuple, Type
+
 from pydantic_settings import (
     BaseSettings,
-    SettingsConfigDict,
     PydanticBaseSettingsSource,
     PyprojectTomlConfigSettingsSource,
+    SettingsConfigDict,
 )
 
 
