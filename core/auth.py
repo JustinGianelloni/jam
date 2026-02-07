@@ -38,7 +38,7 @@ class TokenFactory:
 
     def _request_token(self) -> None:
         creds: str = b64encode(
-            f"{SETTINGS.CLIENT_ID}:{SETTINGS.CLIENT_SECRET}".encode()
+            f"{SETTINGS.client_id}:{SETTINGS.client_secret}".encode()
         ).decode()
         headers: dict[str, Any] = {
             "Accept": "application/json",
@@ -50,10 +50,10 @@ class TokenFactory:
             "grant_type": "client_credentials",
         }
         response: Response = httpx.post(
-            SETTINGS.JUMPCLOUD_OAUTH_URL,
+            SETTINGS.oauth_url,
             headers=headers,
             data=data,
-            timeout=SETTINGS.TIMEOUT,
+            timeout=SETTINGS.timeout,
         )
         response.raise_for_status()
         body: dict[str, Any] = response.json()

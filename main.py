@@ -6,10 +6,10 @@ from httpx import Client
 from rich.console import Console
 from rich.table import Table
 
-from adapters import SystemUsers
+from adapters import system_users
 from core.auth import TokenFactory
 from core.settings import Settings
-from models.SystemUsers import SystemUser
+from models.system_user import SystemUser
 
 TOKEN_FACTORY: TokenFactory = TokenFactory()
 SETTINGS: Settings = Settings()
@@ -25,25 +25,27 @@ def get_client() -> Client:
         "Authorization": TOKEN_FACTORY.get_token(),
     }
     return Client(
-        base_url=SETTINGS.JUMPCLOUD_API_URL,
+        base_url=SETTINGS.api_url,
         headers=headers,
-        timeout=SETTINGS.TIMEOUT,
+        timeout=SETTINGS.timeout,
     )
 
 
 def get_user_table(title: str) -> Table:
     table = Table(title=title)
-    for field in SETTINGS.DEFAULT_CONSOLE_USER_FIELDS.keys():
+    for field in SETTINGS.console_user_fields.keys():
         table.add_column(field)
     return table
 
 
 def save_users_to_csv(users: list[SystemUser], csv_file: str) -> None:
-    keys = SETTINGS.DEFAULT_CSV_USER_FIELDS
+    keys = SETTINGS.csv_user_fields.values()
     with open(csv_file, "w") as file:
         writer = DictWriter(file, fieldnames=keys)
         writer.writeheader()
-        writer.writerows([user.model_dump(include=set(keys)) for user in users])
+        writer.writerows(
+            [user.model_dump(include=set(keys)) for user in users]
+        )
 
 
 @app.command()
@@ -52,15 +54,20 @@ def list_users(
         None,
         help="Any number of filters using JumpCloud's filter syntax, e.g. 'employeeType:$eq:Contractor'",
     ),
-    csv_file: Optional[str] = typer.Option(None, "--csv", help="Export result to specified CSV file")
+    csv_file: Optional[str] = typer.Option(
+        None, "--csv", help="Export result to specified CSV file"
+    ),
 ) -> None:
     """
     List all system users in JumpCloud.
     """
     table = get_user_table("System Users")
-    users = SystemUsers.list_all_system_users(get_client(), filters)
+    users = system_users.list_all_system_users(get_client(), filters)
     for user in users:
-        row_values = [getattr(user, attr) for attr in SETTINGS.DEFAULT_CONSOLE_USER_FIELDS.values()]
+        row_values = [
+            getattr(user, attr)
+            for attr in SETTINGS.console_user_fields.values()
+        ]
         table.add_row(*row_values)
     console.print(table)
     if csv_file:
@@ -74,16 +81,24 @@ def get_user(
         help="a UUID for a JumpCloud user, e.g. '685cb0f6ef36c7bd8ac56c24'"
     ),
 ) -> None:
+    """
+    Get a JumpCloud system user by their UUID. Use 'find-user' to get a user's UUID by their email address.
+    """
     table = get_user_table("System User")
-    user = SystemUsers.list_system_user(get_client(), user_id)
-    row_values = [getattr(user, attr) for attr in SETTINGS.DEFAULT_CONSOLE_USER_FIELDS.values()]
+    user = system_users.list_system_user(get_client(), user_id)
+    row_values = [
+        getattr(user, attr) for attr in SETTINGS.console_user_fields.values()
+    ]
     table.add_row(*row_values)
     console.print(table)
 
 
 @app.command()
 def find_user(email: str) -> None:
-    console.print(SystemUsers.find_system_user(get_client(), email))
+    """
+    Find a JumpCloud user's UUID by their email address. The email can be a partial search, but multiple results will return a ValueError.
+    """
+    console.print(system_users.find_system_user(get_client(), email))
 
 
 if __name__ == "__main__":

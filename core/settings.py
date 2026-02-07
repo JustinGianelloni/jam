@@ -1,34 +1,47 @@
-from pathlib import Path
-
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
-env_file: Path = Path.cwd() / Path(".env")
-
-if not env_file.exists():
-    raise FileNotFoundError("Missing '.env' file.")
+from typing import Tuple, Type
+from pydantic_settings import (
+    BaseSettings,
+    SettingsConfigDict,
+    PydanticBaseSettingsSource,
+    PyprojectTomlConfigSettingsSource,
+)
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=env_file)
-    CLIENT_ID: str
-    CLIENT_SECRET: str
-    JUMPCLOUD_API_URL: str = "https://console.jumpcloud.com/api"
-    JUMPCLOUD_OAUTH_URL: str = (
-        "https://admin-oauth.id.jumpcloud.com/oauth2/token"
+    JAM_CLIENT_ID: str
+    JAM_CLIENT_SECRET: str
+    api_url: str
+    oauth_url: str
+    timeout: int
+    limit: int
+    console_user_fields: dict[str, str]
+    csv_user_fields: dict[str, str]
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        pyproject_toml_table_header=("tool", "jam"),
+        extra="ignore",
     )
-    TIMEOUT: int = 10
-    LIMIT: int = 100
-    DEFAULT_CONSOLE_USER_FIELDS: dict[str, str] = {
-        "ID": "id",
-        "State": "pretty_state",
-        "Email": "email",
-        "Employee Type": "employee_type",
-    }
-    DEFAULT_CSV_USER_FIELDS: list[str] = [
-        "id",
-        "email",
-        "state",
-        "employee_type",
-        "department",
-        "cost_center",
-    ]
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: Type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+        return (
+            init_settings,
+            env_settings,
+            dotenv_settings,
+            PyprojectTomlConfigSettingsSource(settings_cls),
+        )
+
+    @property
+    def client_id(self) -> str:
+        return self.JAM_CLIENT_ID
+
+    @property
+    def client_secret(self) -> str:
+        return self.JAM_CLIENT_SECRET

@@ -1,17 +1,20 @@
-[project]
-name = "jam"
-version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
-    "httpx>=0.28.1",
-    "pydantic>=2.12.5",
-    "pydantic-settings>=2.12.0",
-    "pytz>=2025.2",
-    "rich>=14.3.2",
-    "typer>=0.21.1",
-]
+[tool.auth]
+client_id_uri = "op://Private/JC_OAuth/client_id"
+client_secret_uri = "op://Private/JC_OAuth/client_secret"
 
 [tool.ruff]
 line-length = 79
+
+[tool.jam]
+api_url = "https://console.jumpcloud.com/api"
+oauth_url = "https://admin-oauth.id.jumpcloud.com/oauth2/token"
+timeout = 10
+limit = 100
+
+[project]
+name = "jam"
+version = "0.1.0"
+description = "A command line interface for JumpCloud."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = ["httpx>=0.28.1", "pydantic>=2.12.5", "pydantic-settings>=2.12.0", "pytz>=2025.2", "rich>=14.3.2", "typer>=0.21.1"]

@@ -2,7 +2,7 @@ from httpx import Client
 from rich.progress import Progress
 
 from core.settings import Settings
-from models.SystemUsers import MFA, SystemUser
+from models.system_user import MFA, SystemUser
 
 SETTINGS: Settings = Settings()
 
@@ -11,7 +11,7 @@ def list_all_system_users(client: Client, filters=None) -> list[SystemUser]:
     if filters is None:
         filters = []
     endpoint = "/systemusers"
-    params = {"skip": 0, "limit": SETTINGS.LIMIT, "sort": "_id"}
+    params = {"skip": 0, "limit": SETTINGS.limit, "sort": "_id"}
     if filters:
         for i, f in enumerate(filters):
             params[f"filter[{i}]"] = f
@@ -29,7 +29,7 @@ def list_all_system_users(client: Client, filters=None) -> list[SystemUser]:
             system_users.extend(
                 [SystemUser(**result) for result in body.get("results")]
             )
-            params["skip"] += SETTINGS.LIMIT
+            params["skip"] += SETTINGS.limit
             progress.update(task, completed=params["skip"])
     return system_users
 
