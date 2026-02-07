@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
 from enum import StrEnum
+
+from pydantic import BaseModel, Field
 
 
 class Address(BaseModel):
@@ -47,13 +48,13 @@ class MFAEnrollment(BaseModel):
 
 
 class PhoneNumber(BaseModel):
-    id: str
-    number: str
-    type: str
+    id: str | None = None
+    number: str | None = None
+    type: str | None = None
 
 
 class RecoveryEmail(BaseModel):
-    address: str | None
+    address: str | None = None
     verified: bool
     verified_at: datetime | None = Field(default=None, alias="verifiedAt")
 
@@ -85,19 +86,23 @@ class State(StrEnum):
 class SystemUser(BaseModel):
     id: str = Field(alias="_id")
     account_locked: bool
-    account_locked_date: str | None
+    account_locked_date: str | None = None
     activated: bool
     addresses: list[Address] | None = None
     admin: Admin | None = None
     allow_public_key: bool
     alternate_email: str | None = Field(default=None, alias="alternateEmail")
     attribute: list[Attribute] | None = None
-    bad_login_attempts: int = Field(alias="badLoginAttempts")
+    bad_login_attempts: int | None = Field(
+        default=None, alias="badLoginAttempts"
+    )
     company: str | None = None
     cost_center: str | None = Field(default=None, alias="costCenter")
     created: datetime
-    creation_source: str = Field(alias="creationSource")
-    delegated_authority: DelegatedAuthority = Field(alias="delegatedAuthority")
+    creation_source: str | None = Field(default=None, alias="creationSource")
+    delegated_authority: DelegatedAuthority | None = Field(
+        default=None, alias="delegatedAuthority"
+    )
     department: str | None = None
     description: str | None = None
     disable_device_max_login_attempts: bool = Field(
@@ -109,7 +114,7 @@ class SystemUser(BaseModel):
         default=None, alias="employeeIdentifier"
     )
     employee_type: str | None = Field(default=None, alias="employeeType")
-    enabled_managed_uid: bool
+    enabled_managed_uid: bool | None = None
     enable_user_portal_multifactor: bool
     external_dn: str | None = None
     external_password_expiration_date: datetime | None = None
@@ -126,8 +131,8 @@ class SystemUser(BaseModel):
     mfa_enrollment: MFAEnrollment = Field(alias="mfaEnrollment")
     middle_name: str | None = Field(default=None, alias="middlename")
     organization: str | None = None
-    password_date: datetime
-    password_expiration_date: datetime
+    password_date: datetime | None = None
+    password_expiration_date: datetime | None = None
     password_expired: bool
     password_never_expires: bool
     passwordless_sudo: bool
@@ -152,3 +157,13 @@ class SystemUser(BaseModel):
     unix_guid: int | None = None
     unix_uid: int | None = None
     username: str | None = None
+
+    @property
+    def pretty_state(self) -> str:
+        match self.state:
+            case State.ACTIVATED:
+                return "[green]ACTIVATED[/green]"
+            case State.SUSPENDED:
+                return "[red]SUSPENDED[/red]"
+            case State.STAGED:
+                return "[yellow]STAGED[/yellow]"

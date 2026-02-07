@@ -1,14 +1,15 @@
 import atexit
-import httpx
-
-from httpx import Response
-from pathlib import Path
-from pydantic import BaseModel, ValidationError
-from datetime import datetime, timedelta
-from core.settings import Settings
-from typing import Any
 from base64 import b64encode
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
+
+import httpx
+from httpx import Response
+from pydantic import BaseModel
 from pytz import utc
+
+from core.settings import Settings
 
 TOKEN_FILE: Path = Path("token.json")
 SETTINGS: Settings = Settings()
@@ -28,7 +29,7 @@ class TokenFactory:
         try:
             with open(TOKEN_FILE, "r") as file:
                 return TokenState.model_validate_json(file.read())
-        except ValidationError or FileNotFoundError:
+        except FileNotFoundError:
             return TokenState()
 
     def _save(self) -> None:
@@ -41,16 +42,17 @@ class TokenFactory:
         ).decode()
         headers: dict[str, Any] = {
             "Accept": "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
             "Authorization": f"Basic {creds}",
         }
-        params: dict[str, Any] = {
+        data: dict[str, Any] = {
             "scope": "api",
             "grant_type": "client_credentials",
         }
         response: Response = httpx.post(
             SETTINGS.JUMPCLOUD_OAUTH_URL,
             headers=headers,
-            params=params,
+            data=data,
             timeout=SETTINGS.TIMEOUT,
         )
         response.raise_for_status()
