@@ -15,8 +15,11 @@ class Settings(BaseSettings):
     oauth_url: str
     timeout: int
     limit: int
+    local_tz: str
     console_user_fields: dict[str, str]
     csv_user_fields: dict[str, str]
+    console_system_fields: dict[str, str]
+    csv_system_fields: dict[str, str]
     model_config = SettingsConfigDict(
         env_file=".env",
         pyproject_toml_table_header=("tool", "jam"),

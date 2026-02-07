@@ -4,7 +4,7 @@ from typing import Optional
 import typer
 from rich.console import Console
 
-from adapters import system_users
+from adapters import system_users, systems
 from core.auth import TokenFactory
 from core.settings import Settings
 
@@ -63,6 +63,22 @@ def find_user(email: Optional[str] = typer.Argument(None, help="A valid email ad
         else:
             typer.echo("Error: Missing argument 'EMAIL'.")
     system_users.find_user(email)
+
+
+@app.command()
+def list_systems(
+        filters: list[str] = typer.Argument(
+            None,
+            help="Any number of filters using JumpCloud's filter syntax, e.g. 'osFamily:$eq:Windows'",
+        ),
+        csv_file: Optional[str] = typer.Option(
+            None, "--csv", help="Export result to specified CSV file"
+        ),
+) -> None:
+    """
+    List all systems in JumpCloud.
+    """
+    systems.list_systems(filters, csv_file)
 
 
 if __name__ == "__main__":

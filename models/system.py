@@ -1,7 +1,11 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+import pytz
+from pydantic import BaseModel, Field, field_validator
 
+from core.settings import Settings
+
+SETTINGS = Settings()
 
 class Attribute(BaseModel):
     name: str
@@ -35,7 +39,7 @@ class Windows(BaseModel):
 
 
 class MDM(BaseModel):
-    dep: bool
+    dep: bool | None = None
     enrollment_type: str | None = Field(default=None, alias="enrollmentType")
     internal: Internal | None = None
     lost_mode_status: str | None = Field(default=None, alias="lostModeStatus")
@@ -43,7 +47,7 @@ class MDM(BaseModel):
         default=None, alias="profileIdentifier"
     )
     provider_id: str | None = Field(default=None, alias="profileId")
-    userApproved: bool = Field(alias="userApproved")
+    userApproved: bool | None = Field(default=None, alias="userApproved")
     vendor: str | None = None
     windows: Windows | None = None
 
@@ -81,12 +85,12 @@ class PolicyStats(BaseModel):
 
 
 class PrimarySystemUser(BaseModel):
-    id: str
+    id: str | None = None
 
 
 class Provisioner(BaseModel):
-    provisionerId: str
-    type: str
+    provisioner_id: str | None = Field(default=None, alias="provisionerId")
+    type: str | None = None
 
 
 class ProvisionMetadata(BaseModel):
@@ -122,7 +126,7 @@ class UserMetric(BaseModel):
 
 
 class System(BaseModel):
-    _id: str
+    id: str = Field(alias="_id")
     active: bool
     agent_has_full_disk_access: bool = Field(alias="agentHasFullDiskAccess")
     agent_version: str | None = Field(default=None, alias="agentVersion")
@@ -160,7 +164,7 @@ class System(BaseModel):
     has_service_account: bool = Field(alias="hasServiceAccount")
     hostname: str | None = None
     hw_vendor: str | None = Field(default=None, alias="hwVendor")
-    is_policy_bound: bool = Field(alias="isPolicyBound")
+    is_policy_bound: bool | None = Field(default=None, alias="isPolicyBound")
     last_contact: datetime | None = Field(default=None, alias="lastContact")
     mdm: MDM | None = None
     modify_sshd_config: bool = Field(alias="modifySSHDConfig")
@@ -203,3 +207,29 @@ class System(BaseModel):
         default=None, alias="userMetrics"
     )
     version: str | None = None
+
+
+    @property
+    def pretty_last_contact(self) -> str:
+        tz = pytz.timezone(SETTINGS.local_tz)
+        if self.last_contact is None:
+            return "Never"
+        return self.last_contact.astimezone(tz).strftime("%Y-%m-%d %H:%M:%S")
+
+    @property
+    def pretty_os(self) -> str:
+        match self.os:
+            case "Windows":
+                return "[blue]Windows[/blue]"
+            case "Mac OS X":
+                return "[magenta]Mac OS X[/magenta]"
+            case "Ubuntu":
+                return "[yellow]Ubuntu[/yellow]"
+            case "Android":
+                return "[green]Android[/green]"
+            case "ios":
+                return "[purple]iOS[/purple]"
+            case "iPadOS":
+                return "[magenta]iPadOS[/magenta]"
+            case _:
+                return self.os_family

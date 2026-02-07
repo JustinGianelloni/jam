@@ -23,6 +23,7 @@ api_url = "https://console.jumpcloud.com/api"
 oauth_url = "https://admin-oauth.id.jumpcloud.com/oauth2/token"
 timeout = 10
 limit = 100
+local_tz = "US/Eastern"
 
 [tool.jam.console_user_fields]
 "ID" = "id"
@@ -37,3 +38,17 @@ limit = 100
 "Employee Type" = "employee_type"
 "Department" = "department"
 "Cost Center" = "cost_center"
+
+[tool.jam.console_system_fields]
+"ID" = "id"
+"Hostname" = "hostname"
+"Last Contact" = "pretty_last_contact"
+"OS" = "pretty_os"
+"Serial" = "serial_number"
+
+[tool.jam.csv_system_fields]
+"ID" = "id"
+"Hostname" = "hostname"
+"Last Contact" = "last_contact"
+"OS" = "os"
+"Serial" = "serial_number"

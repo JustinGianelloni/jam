@@ -7,9 +7,7 @@ from models.system_user import MFA, SystemUser
 SETTINGS: Settings = Settings()
 
 
-def list_all_system_users(client: Client, filters=None) -> list[SystemUser]:
-    if filters is None:
-        filters = []
+def list_all_system_users(client: Client, filters: list[str] | None) -> list[SystemUser]:
     endpoint = "/systemusers"
     params = {"skip": 0, "limit": SETTINGS.limit, "sort": "_id"}
     if filters:

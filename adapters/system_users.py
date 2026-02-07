@@ -58,7 +58,7 @@ def get_user(user_id: str, full: bool) -> None:
     CONSOLE.print(table)
 
 
-def list_users(filters: list[str], csv_file: str | None) -> None:
+def list_users(filters: list[str] | None, csv_file: str | None) -> None:
     table = get_user_table("System Users")
     users = system_users.list_all_system_users(get_client(), filters)
     for user in users:
