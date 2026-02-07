@@ -43,7 +43,16 @@ get_op_creds () {
     echo "Client ID:      $client_id"
     echo "Client Secret:  $client_secret"
   fi
-  yq -i -p toml -o toml ".tool.auth.client_id_uri = \"$client_id\" | .tool.auth.client_secret_uri = \"$client_secret\"" pyproject.toml
+  if grep -q '^client_id_uri = ' pyproject.toml; then
+    sed -i '' 's|^client_id_uri = .*|client_id_uri = "'"$client_id"'"|' pyproject.toml
+  else
+    sed -i '' '/^\[tool\.auth\]/a\'$'\n''client_id_uri = "'"$client_id"'"' pyproject.toml
+  fi
+  if grep -q '^client_secret_uri = ' pyproject.toml; then
+    sed -i '' 's|^client_secret_uri = .*|client_secret_uri = "'"$client_secret"'"|' pyproject.toml
+  else
+    sed -i '' '/^\[tool\.auth\]/a\'$'\n''client_secret_uri = "'"$client_secret"'"' pyproject.toml
+  fi
 }
 
 choose_field() {
