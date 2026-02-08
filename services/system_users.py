@@ -7,7 +7,9 @@ from models.system_user import MFA, SystemUser
 SETTINGS: Settings = Settings()
 
 
-def list_all_system_users(client: Client, filters: list[str] | None) -> list[SystemUser]:
+def list_all_system_users(
+    client: Client, filters: list[str] | None
+) -> list[SystemUser]:
     endpoint = "/systemusers"
     params = {"skip": 0, "limit": SETTINGS.limit, "sort": "_id"}
     if filters:
@@ -117,20 +119,15 @@ def unlock_system_user(client: Client, user_id: str) -> None:
     response.raise_for_status()
 
 
-def find_system_user(client: Client, email: str) -> str:
+def find_system_user(client: Client, email: str) -> list[SystemUser]:
     endpoint = "/search/systemusers"
     data = {
         "searchFilter": {
             "searchTerm": email,
             "fields": ["email"],
         },
-        "fields": "_id",
     }
     response = client.post(endpoint, json=data)
     response.raise_for_status()
     body = response.json()
-    if body.get("totalCount") == 0:
-        raise ValueError(f"No user found with email: {email}")
-    elif body.get("totalCount") > 1:
-        raise ValueError(f"More than one user found with email: {email}")
-    return body.get("results")[0].get("_id")
+    return [SystemUser(**result) for result in body.get("results")]

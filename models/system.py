@@ -7,6 +7,7 @@ from core.settings import Settings
 
 SETTINGS = Settings()
 
+
 class Attribute(BaseModel):
     name: str
     value: str
@@ -18,8 +19,8 @@ class BuiltInCommands(BaseModel):
 
 
 class DomainInfo(BaseModel):
-    domain_name: str = Field(alias="domainName")
-    part_of_domain: bool = Field(alias="partOfDomain")
+    domain_name: str | None = Field(default=None, alias="domainName")
+    part_of_domain: bool | None = Field(default=None, alias="partOfDomain")
 
 
 class FDE(BaseModel):
@@ -127,47 +128,55 @@ class UserMetric(BaseModel):
 
 class System(BaseModel):
     id: str = Field(alias="_id")
-    active: bool
-    agent_has_full_disk_access: bool = Field(alias="agentHasFullDiskAccess")
+    active: bool | None = None
+    agent_has_full_disk_access: bool | None = Field(
+        default=None, alias="agentHasFullDiskAccess"
+    )
     agent_version: str | None = Field(default=None, alias="agentVersion")
-    allow_multifactor_authentication: bool = Field(
-        alias="allowMultiFactorAuthentication"
+    allow_multifactor_authentication: bool | None = Field(
+        default=None, alias="allowMultiFactorAuthentication"
     )
-    allow_public_key_authentication: bool = Field(
-        alias="allowPublicKeyAuthentication"
+    allow_public_key_authentication: bool | None = Field(
+        default=None, alias="allowPublicKeyAuthentication"
     )
-    allow_ssh_password_authentication: bool = Field(
-        alias="allowSshPasswordAuthentication"
+    allow_ssh_password_authentication: bool | None = Field(
+        default=None, alias="allowSshPasswordAuthentication"
     )
-    allow_ssh_root_login: bool = Field(alias="allowSshRootLogin")
+    allow_ssh_root_login: bool | None = Field(
+        default=None, alias="allowSshRootLogin"
+    )
     amazon_instance_id: str | None = Field(
         default=None, alias="amazonInstanceID"
     )
     arch: str | None = None
     arch_family: str | None = Field(default=None, alias="archFamily")
     attributes: list[Attribute] | None = None
-    azure_ad_joined: bool = Field(alias="azureAdJoined")
+    azure_ad_joined: bool | None = Field(default=None, alias="azureAdJoined")
     built_in_commands: list[BuiltInCommands] | None = Field(
         default=None, alias="builtInCommands"
     )
     connection_history: list[str] | None = Field(
         default=None, alias="connectionHistory"
     )
-    created: datetime
+    created: datetime | None = None
     description: str | None = None
-    desktop_capable: bool = Field(alias="desktopCapable")
+    desktop_capable: bool | None = Field(default=None, alias="desktopCapable")
     display_manager: str | None = Field(default=None, alias="displayManager")
     display_name: str | None = Field(default=None, alias="displayName")
     domain_info: DomainInfo | None = Field(default=None, alias="domainInfo")
     fde: FDE | None = None
     file_system: str | None = Field(default=None, alias="fileSystem")
-    has_service_account: bool = Field(alias="hasServiceAccount")
+    has_service_account: bool | None = Field(
+        default=None, alias="hasServiceAccount"
+    )
     hostname: str | None = None
     hw_vendor: str | None = Field(default=None, alias="hwVendor")
     is_policy_bound: bool | None = Field(default=None, alias="isPolicyBound")
     last_contact: datetime | None = Field(default=None, alias="lastContact")
     mdm: MDM | None = None
-    modify_sshd_config: bool = Field(alias="modifySSHDConfig")
+    modify_sshd_config: bool | None = Field(
+        default=None, alias="modifySSHDConfig"
+    )
     network_interfaces: list[NetworkInterface] | None = Field(
         default=None, alias="networkInterfaces"
     )
@@ -193,7 +202,7 @@ class System(BaseModel):
     service_account_state: ServiceAccountState | None = Field(
         default=None, alias="serviceAccountState"
     )
-    ssh_root_enabled: bool = Field(alias="sshRootEnabled")
+    ssh_root_enabled: bool | None = Field(default=None, alias="sshRootEnabled")
     sshd_params: list[SSHDParam] | None = Field(
         default=None, alias="sshdParams"
     )
@@ -207,7 +216,6 @@ class System(BaseModel):
         default=None, alias="userMetrics"
     )
     version: str | None = None
-
 
     @property
     def pretty_last_contact(self) -> str:

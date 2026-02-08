@@ -74,4 +74,18 @@ def list_users(filters: list[str] | None, csv_file: str | None) -> None:
 
 
 def find_user(email: str) -> None:
-    CONSOLE.print(system_users.find_system_user(get_client(), email))
+    users = system_users.find_system_user(get_client(), email)
+    if not users:
+        CONSOLE.print(f"No users found with email address matching '{email}'.")
+        return
+    if len(users) == 1:
+        CONSOLE.print(users[0].id)
+        return
+    table = get_user_table("Search Results")
+    for user in users:
+        row_values = [
+            getattr(user, attr)
+            for attr in SETTINGS.console_user_fields.values()
+        ]
+        table.add_row(*row_values)
+    CONSOLE.print(table)
