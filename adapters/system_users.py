@@ -36,12 +36,12 @@ def get_user_table(title: str) -> Table:
 
 
 def save_users_to_csv(users: list[SystemUser], csv_file: str) -> None:
-    keys = SETTINGS.csv_user_fields.values()
+    fieldnames = SETTINGS.csv_user_fields.values()
     with open(csv_file, "w") as file:
-        writer = DictWriter(file, fieldnames=keys)
-        writer.writeheader()
+        writer = DictWriter(file, fieldnames=fieldnames)
+        writer.writerow({value: name for name, value in SETTINGS.csv_user_fields.items()})
         writer.writerows(
-            [user.model_dump(include=set(keys)) for user in users]
+            [user.model_dump(include=set(fieldnames)) for user in users]
         )
 
 

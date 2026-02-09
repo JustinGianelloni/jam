@@ -42,12 +42,12 @@ def get_system_list_table(title: str) -> Table:
 
 
 def save_systems_to_csv(users: list[System], csv_file: str) -> None:
-    keys = SETTINGS.csv_system_fields.values()
+    fieldnames = SETTINGS.csv_system_fields.values()
     with open(csv_file, "w") as file:
-        writer = DictWriter(file, fieldnames=keys)
-        writer.writeheader()
+        writer = DictWriter(file, fieldnames=fieldnames)
+        writer.writerow({value: name for name, value in SETTINGS.csv_system_fields.items()})
         writer.writerows(
-            [user.model_dump(include=set(keys)) for user in users]
+            [user.model_dump(include=set(fieldnames)) for user in users]
         )
 
 
