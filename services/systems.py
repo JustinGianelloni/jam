@@ -16,7 +16,6 @@ def list_all_systems(
         "limit": SETTINGS.limit,
         "sort": "_id",
     }
-    print(filters)
     if filters:
         for i, f in enumerate(filters):
             params[f"filter[{i}]"] = f

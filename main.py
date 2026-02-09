@@ -2,7 +2,6 @@ import sys
 from typing import Optional
 
 import typer
-from rich.console import Console
 
 from adapters import system_users, systems
 from core.auth import TokenFactory
@@ -12,7 +11,6 @@ TOKEN_FACTORY: TokenFactory = TokenFactory()
 SETTINGS: Settings = Settings()
 
 app = typer.Typer()
-console = Console()
 
 
 @app.command()

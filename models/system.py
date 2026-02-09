@@ -235,7 +235,7 @@ class System(BaseModel):
                 return "[yellow]Ubuntu[/yellow]"
             case "Android":
                 return "[green]Android[/green]"
-            case "ios":
+            case "iOS":
                 return "[purple]iOS[/purple]"
             case "iPadOS":
                 return "[magenta]iPadOS[/magenta]"

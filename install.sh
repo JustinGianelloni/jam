@@ -15,16 +15,24 @@ else
   fi
 fi
 
-# Install missing dependencies
-echo -n "Installing any missing dependencies..."
+# Install missing dependencies with one brew command
+missing=()
 for tool in "${tools[@]}"; do
-  if command -v "$tool" &> /dev/null; then
-    echo "$tool is already installed."
-  else
-    echo "Installing $tool..."
-    brew install "$tool"
-  fi
+  command -v "$tool" &>/dev/null || missing+=("$tool")
 done
+if (( ${#missing[@]} )); then
+  echo "Installing: ${missing[*]}"
+  brew install "${missing[@]}"
+else
+  echo "All dependencies already installed."
+fi
+
+choose_field() {
+  local prompt_text=$1
+  echo "$op_json" | \
+  jq -r '.fields[] | "\(.label): \(.reference)"' | \
+  fzf --prompt="$prompt_text" --height=10% --reverse | sed 's/.*: //'
+}
 
 # Retrieve credentials from 1Password if selected
 get_op_creds () {
@@ -55,13 +63,6 @@ get_op_creds () {
   fi
 }
 
-choose_field() {
-  local prompt_text=$1
-  echo "$op_json" | \
-  jq -r '.fields[] | "\(.label): \(.reference)"' | \
-  fzf --prompt="$prompt_text" --height=10% --reverse | sed 's/.*: //'
-}
-
 if (( use_op )); then
   get_op_creds
 fi
@@ -71,6 +72,7 @@ if grep -qF "alias jam=" ~/.zshrc; then
   echo "Alias for jam already exists. If issues persist, check your .zshrc file."
 else
   echo "Adding alias for jam to .zshrc..."
-  echo "alias jam=\"$(pwd)/jam.sh\"" >> ~/.zshrc
+  script_dir="$(cd "$(dirname "$0")" && pwd)"
+  echo "alias jam=\"${script_dir}/jam.sh\"" >> ~/.zshrc
   echo "Run 'source ~/.zshrc' or restart your terminal to start using the 'jam' command."
 fi
