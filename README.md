@@ -46,8 +46,8 @@ A command-line interface for managing JumpCloud users and systems.
 
 4. If not using 1Password, manually configure your credentials in a `.env` file in the project root:
    ```bash
-   CLIENT_ID=your-client-id
-   CLIENT_SECRET=your-client-secret
+   JAM_CLIENT_ID=your-client-id
+   JAM_CLIENT_SECRET=your-client-secret
    ```
 
 ## Commands
