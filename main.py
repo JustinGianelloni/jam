@@ -15,17 +15,52 @@ app = typer.Typer()
 
 @app.command()
 def list_users(
-    filters: list[str] = typer.Argument(
+    filters: Optional[list[str]] = typer.Option(
         None,
+        "--filter",
         help="Any number of filters using JumpCloud's filter syntax, e.g. 'employeeType:$eq:Contractor'",
     ),
     csv_file: Optional[str] = typer.Option(
         None, "--csv", help="Export result to specified CSV file"
     ),
+    department: Optional[str] = typer.Option(
+        None,
+        "--department",
+        help="Filter users by their department attribute, e.g. 'Engineering'",
+    ),
+    cost_center: Optional[str] = typer.Option(
+        None,
+        "--cost-center",
+        help="Filter users by their cost center attribute, e.g. 'Data Engineering'",
+    ),
+    title: Optional[str] = typer.Option(
+        None,
+        "--title",
+        help="Filter users by their job title attribute, e.g. 'Data Engineer'",
+    ),
+    state: Optional[str] = typer.Option(
+        None,
+        "--state",
+        help="Filter users by their state in JumpCloud, e.g. 'ACTIVATED', 'SUSPENDED', or 'STAGED'",
+    ),
 ) -> None:
     """
     List all system users in JumpCloud.
+    Users can be filtered by specifying a flag with a value or by using JumpCloud's filter syntax.
+    For example, to filter for all activated users in the engineering department,
+    you could use either '--state ACTIVATED --department Engineering' or '--filter state:$eq:ACTIVATED --filter department:$eq:Engineering'.
+    If both flag-based filters and filter syntax are used together, they will be combined into a single list of filters.
     """
+    if not filters:
+        filters = []
+    if department:
+        filters.append(f"department:$eq:{department}")
+    if cost_center:
+        filters.append(f"costCenter:$eq:{cost_center}")
+    if title:
+        filters.append(f"jobTitle:$eq:{title}")
+    if state:
+        filters.append(f"state:$eq:{state}")
     system_users.list_users(filters, csv_file)
 
 
@@ -69,17 +104,37 @@ def find_user(
 
 @app.command()
 def list_systems(
-    filters: list[str] = typer.Argument(
+    filters: Optional[list[str]] = typer.Option(
         None,
+        "--filter",
         help="Any number of filters using JumpCloud's filter syntax, e.g. 'osFamily:$eq:Windows'",
     ),
     csv_file: Optional[str] = typer.Option(
         None, "--csv", help="Export result to specified CSV file"
     ),
+    os: Optional[str] = typer.Option(
+        None,
+        "--os",
+        help="Filter systems by their operating system, e.g. 'Windows', 'Max OS X', or 'Ubuntu'",
+    ),
+    os_family: Optional[str] = typer.Option(
+        None,
+        "--os-family",
+        help="Filter systems by their operating system family, e.g. 'windows', 'darwin', or 'linux'",
+    ),
 ) -> None:
     """
     List all systems in JumpCloud.
+    Systems can be filtered by specifying a flag with a value or by using JumpCloud's filter syntax.
+    For example, to filter for all Windows systems, you could use either '--os Windows' or '--filter os:$eq:Windows'.
+    If both flag-based filters and filter syntax are used together, they will be combined into a single list of filters.
     """
+    if not filters:
+        filters = []
+    if os:
+        filters.append(f"os:$eq:{os}")
+    if os_family:
+        filters.append(f"osFamily:$eq:{os_family}")
     systems.list_systems(filters, csv_file)
 
 
