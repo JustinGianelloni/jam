@@ -1,18 +1,18 @@
 import atexit
 from base64 import b64encode
 from datetime import datetime, timedelta
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 import httpx
-from httpx import Response
+from httpx import Client, Response
 from pydantic import BaseModel
 from pytz import utc
 
-from core.settings import Settings
+from core.settings import get_settings
 
 TOKEN_FILE: Path = Path("token.json")
-SETTINGS: Settings = Settings()
 
 
 class TokenState(BaseModel):
@@ -22,6 +22,7 @@ class TokenState(BaseModel):
 
 class TokenFactory:
     def __init__(self) -> None:
+        self._settings = get_settings()
         self._state = self._load()
         atexit.register(self._save)
 
@@ -38,7 +39,7 @@ class TokenFactory:
 
     def _request_token(self) -> None:
         creds: str = b64encode(
-            f"{SETTINGS.client_id}:{SETTINGS.client_secret}".encode()
+            f"{self._settings.client_id}:{self._settings.client_secret}".encode()
         ).decode()
         headers: dict[str, Any] = {
             "Accept": "application/json",
@@ -50,10 +51,10 @@ class TokenFactory:
             "grant_type": "client_credentials",
         }
         response: Response = httpx.post(
-            SETTINGS.oauth_url,
+            self._settings.oauth_url,
             headers=headers,
             data=data,
-            timeout=SETTINGS.timeout,
+            timeout=self._settings.timeout,
         )
         response.raise_for_status()
         body: dict[str, Any] = response.json()
@@ -69,3 +70,30 @@ class TokenFactory:
         ):
             self._request_token()
         return f"Bearer {self._state.access_token}"
+
+
+@lru_cache
+def get_token_factory() -> TokenFactory:
+    """Return a cached singleton instance of TokenFactory."""
+    return TokenFactory()
+
+
+def get_client() -> Client:
+    """
+    Return a configured HTTP client.
+
+    Note: Not cached because the authorization token may expire.
+    The TokenFactory handles token refresh internally.
+    """
+    settings = get_settings()
+    token_factory = get_token_factory()
+    headers: dict[str, Any] = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": token_factory.get_token(),
+    }
+    return Client(
+        base_url=settings.api_url,
+        headers=headers,
+        timeout=settings.timeout,
+    )

@@ -1,5 +1,7 @@
+from functools import lru_cache
 from typing import Tuple, Type
 
+from pydantic import Field
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -9,17 +11,17 @@ from pydantic_settings import (
 
 
 class Settings(BaseSettings):
-    JAM_CLIENT_ID: str
-    JAM_CLIENT_SECRET: str
-    api_url: str
-    oauth_url: str
-    timeout: int
-    limit: int
-    local_tz: str
-    console_user_fields: dict[str, str]
-    csv_user_fields: dict[str, str]
-    console_system_fields: dict[str, str]
-    csv_system_fields: dict[str, str]
+    JAM_CLIENT_ID: str = Field(init=False)
+    JAM_CLIENT_SECRET: str = Field(init=False)
+    api_url: str = Field(init=False)
+    oauth_url: str = Field(init=False)
+    timeout: int = Field(init=False)
+    limit: int = Field(init=False)
+    local_tz: str = Field(init=False)
+    console_user_fields: dict[str, str] = Field(init=False)
+    csv_user_fields: dict[str, str] = Field(init=False)
+    console_system_fields: dict[str, str] = Field(init=False)
+    csv_system_fields: dict[str, str] = Field(init=False)
     model_config = SettingsConfigDict(
         env_file=".env",
         pyproject_toml_table_header=("tool", "jam"),
@@ -49,3 +51,9 @@ class Settings(BaseSettings):
     @property
     def client_secret(self) -> str:
         return self.JAM_CLIENT_SECRET
+
+
+@lru_cache
+def get_settings() -> Settings:
+    """Return a cached singleton instance of Settings."""
+    return Settings()

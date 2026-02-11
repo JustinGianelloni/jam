@@ -1,24 +1,22 @@
 from httpx import Client
 from rich.progress import Progress
 
-from core.settings import Settings
+from core.settings import get_settings
 from models.system import System
 
-SETTINGS = Settings()
 
-
-def list_all_systems(
-    client: Client, filters: list[str] | None
+def list_systems(
+    client: Client, filters: list[str] | None = None
 ) -> list[System]:
+    settings = get_settings()
     endpoint = "/systems"
     params = {
         "skip": 0,
-        "limit": SETTINGS.limit,
+        "limit": settings.limit,
         "sort": "_id",
     }
-    if filters:
-        for i, f in enumerate(filters):
-            params[f"filter[{i}]"] = f
+    for i, f in enumerate(filters or []):
+        params[f"filter[{i}]"] = f
     systems: list[System] = []
     total: int | None = None
     with Progress() as progress:
@@ -33,13 +31,13 @@ def list_all_systems(
             systems.extend(
                 [System(**result) for result in body.get("results")]
             )
-            params["skip"] += SETTINGS.limit
+            params["skip"] += settings.limit
             progress.update(task, completed=params["skip"])
     return systems
 
 
-def list_system(client: Client, system_id_: str) -> System:
-    endpoint = f"/systems/{system_id_}"
+def get_system(client: Client, system_id: str) -> System:
+    endpoint = f"/systems/{system_id}"
     response = client.get(endpoint)
     response.raise_for_status()
     return System(**response.json())

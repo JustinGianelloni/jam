@@ -1,11 +1,9 @@
 from datetime import datetime
 
 import pytz
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
-from core.settings import Settings
-
-SETTINGS = Settings()
+from core.settings import get_settings
 
 
 class Attribute(BaseModel):
@@ -219,7 +217,8 @@ class System(BaseModel):
 
     @property
     def pretty_last_contact(self) -> str:
-        tz = pytz.timezone(SETTINGS.local_tz)
+        settings = get_settings()
+        tz = pytz.timezone(settings.local_tz)
         if self.last_contact is None:
             return "Never"
         return self.last_contact.astimezone(tz).strftime("%Y-%m-%d %H:%M:%S")

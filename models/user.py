@@ -83,7 +83,7 @@ class State(StrEnum):
     SUSPENDED = "SUSPENDED"
 
 
-class SystemUser(BaseModel):
+class User(BaseModel):
     id: str = Field(alias="_id")
     account_locked: bool
     account_locked_date: str | None = None
