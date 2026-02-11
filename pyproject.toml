@@ -32,7 +32,6 @@ local_tz = "US/Eastern"
 "Employee Type" = "employee_type"
 "Job Title" = "job_title"
 "Department" = "department"
-"Cost Center" = "cost_center"
 
 [tool.jam.csv_user_fields]
 "ID" = "id"

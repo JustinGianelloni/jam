@@ -54,11 +54,13 @@ A command-line interface for managing JumpCloud users and systems.
 
 ### User Commands
 
-#### `list-users`
+User commands are accessed via the `users` subcommand group.
+
+#### `users list`
 List all system users in JumpCloud.
 
 ```bash
-jam list-users [OPTIONS]
+jam users list [OPTIONS]
 ```
 
 **Options:**
@@ -71,49 +73,53 @@ jam list-users [OPTIONS]
 
 **Examples:**
 ```bash
-jam list-users
-jam list-users --state ACTIVATED
-jam list-users --department Engineering --state ACTIVATED
-jam list-users --filter 'employeeType:$eq:Contractor'
-jam list-users --csv users.csv
+jam users list
+jam users list --state ACTIVATED
+jam users list --department Engineering --state ACTIVATED
+jam users list --filter 'employeeType:$eq:Contractor'
+jam users list --csv users.csv
 ```
 
-#### `get-user`
+#### `users get`
 Get a JumpCloud system user by their UUID.
 
 ```bash
-jam get-user [USER_ID] [--full]
+jam users get [USER_ID] [OPTIONS]
 ```
 
 **Options:**
 - `USER_ID` - A valid UUID for a JumpCloud user
 - `--full` - Display all available fields
+- `--json FILE` - Export user to a JSON file
 
 **Examples:**
 ```bash
-jam get-user 685cb0f6ef36c7bd8ac56c24
-jam get-user 685cb0f6ef36c7bd8ac56c24 --full
+jam users get 685cb0f6ef36c7bd8ac56c24
+jam users get 685cb0f6ef36c7bd8ac56c24 --full
+jam users get 685cb0f6ef36c7bd8ac56c24 --json user.json
 ```
 
-#### `find-user`
+#### `users find`
 Find a JumpCloud user's UUID by their email address.
 
 ```bash
-jam find-user [EMAIL]
+jam users find [EMAIL]
 ```
 
 **Examples:**
 ```bash
-jam find-user user@example.com
+jam users find user@example.com
 ```
 
 ### System Commands
 
-#### `list-systems`
+System commands are accessed via the `systems` subcommand group.
+
+#### `systems list`
 List all systems in JumpCloud.
 
 ```bash
-jam list-systems [OPTIONS]
+jam systems list [OPTIONS]
 ```
 
 **Options:**
@@ -124,18 +130,18 @@ jam list-systems [OPTIONS]
 
 **Examples:**
 ```bash
-jam list-systems
-jam list-systems --os-family darwin
-jam list-systems --os Windows
-jam list-systems --filter 'osFamily:$eq:Windows'
-jam list-systems --csv systems.csv
+jam systems list
+jam systems list --os-family darwin
+jam systems list --os Windows
+jam systems list --filter 'osFamily:$eq:Windows'
+jam systems list --csv systems.csv
 ```
 
-#### `get-system`
+#### `systems get`
 Get a JumpCloud system by its UUID.
 
 ```bash
-jam get-system [SYSTEM_ID] [--full]
+jam systems get [SYSTEM_ID] [OPTIONS]
 ```
 
 **Options:**
@@ -144,45 +150,45 @@ jam get-system [SYSTEM_ID] [--full]
 
 **Examples:**
 ```bash
-jam get-system 69879fa9b5be2f2184d700da
-jam get-system 69879fa9b5be2f2184d700da --full
+jam systems get 69879fa9b5be2f2184d700da
+jam systems get 69879fa9b5be2f2184d700da --full
 ```
 
-#### `find-system`
+#### `systems find`
 Find a JumpCloud system's UUID by its hostname or serial number.
 
 ```bash
-jam find-system [QUERY]
+jam systems find [QUERY]
 ```
 
 **Examples:**
 ```bash
-jam find-system DESKTOP-ABC123
-jam find-system C02XG123ABC
+jam systems find DESKTOP-ABC123
+jam systems find C02XG123ABC
 ```
 
-#### `fde-key`
+#### `systems fde-key`
 Retrieve the full disk encryption key for a system.
 
 ```bash
-jam fde-key [SYSTEM_ID]
+jam systems fde-key [SYSTEM_ID]
 ```
 
 **Examples:**
 ```bash
-jam fde-key 69879fa9b5be2f2184d700da
+jam systems fde-key 69879fa9b5be2f2184d700da
 ```
 
-#### `bound-systems`
+#### `systems bound`
 Find all systems bound to a JumpCloud user.
 
 ```bash
-jam bound-systems [USER_ID]
+jam systems bound [USER_ID]
 ```
 
 **Examples:**
 ```bash
-jam bound-systems 685cb0f6ef36c7bd8ac56c24
+jam systems bound 685cb0f6ef36c7bd8ac56c24
 ```
 
 ## Piping Commands
@@ -191,13 +197,13 @@ Commands support Unix pipes, allowing you to chain operations:
 
 ```bash
 # Find a user and get their details
-jam find-user user@example.com | jam get-user
+jam users find user@example.com | jam users get
 
 # Find a user and list their bound systems
-jam find-user user@example.com | jam bound-systems
+jam users find user@example.com | jam systems bound
 
 # Find a system and get its FDE key
-jam find-system DESKTOP-ABC123 | jam fde-key
+jam systems find DESKTOP-ABC123 | jam systems fde-key
 ```
 
 ## Configuration
