@@ -119,3 +119,11 @@ def find_user(client: Client, email: str) -> list[User]:
     response.raise_for_status()
     body = response.json()
     return [User(**result) for result in body.get("results")]
+
+
+def list_bound_systems(client: Client, user_id: str) -> list[str]:
+    endpoint = f"/v2/users/{user_id}/systems"
+    response = client.get(endpoint)
+    response.raise_for_status()
+    body = response.json()
+    return [result.get("id") for result in body]

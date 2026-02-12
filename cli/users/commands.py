@@ -88,3 +88,17 @@ def find_user(
     """
     email = resolve_argument(email, "Email")
     presenter.find_user(email)
+
+
+@app.command(name="bound-systems")
+def bound_systems(
+    user_id: str | None = typer.Argument(
+        None,
+        help="A valid UUID for a JumpCloud user, e.g. '685cb0f6ef36c7bd8ac56c24'",
+    ),
+) -> None:
+    """
+    Find all systems bound to a JumpCloud user by the user's UUID. If the query returns multiple results, a table of matching systems will be displayed instead of a list of UUIDs.
+    """
+    user_id = resolve_argument(user_id, "User ID")
+    presenter.list_bound_systems(user_id)

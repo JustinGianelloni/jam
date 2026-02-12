@@ -6,6 +6,16 @@ from pydantic import BaseModel, Field
 from core.settings import get_settings
 
 
+class Relationship(BaseModel):
+    id: str | None = None
+    type: str | None = None
+
+
+class Association(BaseModel):
+    to: Relationship | None = None
+    fr: Relationship | None = Field(default=None, alias="from")
+
+
 class Attribute(BaseModel):
     name: str
     value: str
