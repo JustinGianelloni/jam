@@ -75,16 +75,15 @@ def find_system(query: str) -> None:
     print_table(table)
 
 
-def list_bound_systems(user_id: str) -> None:
-    """List all systems bound to a user."""
-    systems = api.list_bound_systems(get_client(), user_id)
-    if not systems:
-        CONSOLE.print(f"No devices found bound to user with ID '{user_id}'.")
+def list_user_associations(system_id: str) -> None:
+    associations = api.list_associations(get_client(), "user", system_id)
+    if not associations:
+        CONSOLE.print(f"No associations found with ID '{system_id}'.")
         return
-    if len(systems) == 1:
-        print_value(systems[0])
+    if len(associations) == 1:
+        print_value(associations[0].to.id)
         return
-    table = create_table("Bound Systems", ["ID"])
-    for system in systems:
-        table.add_row(system)
+    table = create_table("Associations", ["ID"])
+    for association in associations:
+        table.add_row(association.to.id)
     print_table(table)

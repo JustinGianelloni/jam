@@ -2,7 +2,7 @@ from httpx import Client
 from rich.progress import Progress
 
 from core.settings import get_settings
-from models.system import System
+from models.system import System, Association
 
 
 def list_systems(
@@ -64,9 +64,10 @@ def find_system(client: Client, query: str) -> list[System]:
     return [System(**result) for result in body.get("results")]
 
 
-def list_bound_systems(client: Client, user_id: str) -> list[str]:
-    endpoint = f"/v2/users/{user_id}/systems"
-    response = client.get(endpoint)
+def list_associations(client: Client, target: str, system_id: str) -> list[Association]:
+    endpoint = f"/v2/systems/{system_id}/associations"
+    params = {"targets": target}
+    response = client.get(endpoint, params=params)
     response.raise_for_status()
     body = response.json()
-    return [result.get("id") for result in body]
+    return [Association(**association) for association in body]

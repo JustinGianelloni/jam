@@ -68,3 +68,18 @@ def find_user(email: str) -> None:
     table = _get_user_table("Search Results")
     _add_user_rows(table, users)
     print_table(table)
+
+
+def list_bound_systems(user_id: str) -> None:
+    """List all systems bound to a user."""
+    systems = api.list_bound_systems(get_client(), user_id)
+    if not systems:
+        CONSOLE.print(f"No devices found bound to user with ID '{user_id}'.")
+        return
+    if len(systems) == 1:
+        print_value(systems[0])
+        return
+    table = create_table("Bound Systems", ["ID"])
+    for system in systems:
+        table.add_row(system)
+    print_table(table)

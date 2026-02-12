@@ -8,7 +8,8 @@ A command-line interface for managing JumpCloud users and systems.
 - List and search JumpCloud systems
 - Retrieve full disk encryption (FDE) keys
 - Find systems bound to specific users
-- Export data to CSV files
+- Find users bound to specific systems
+- Export data to CSV and JSON files
 - Supports Unix pipes for command chaining
 - Optional 1Password integration for credential management
 
@@ -111,6 +112,18 @@ jam users find [EMAIL]
 jam users find user@example.com
 ```
 
+#### `users bound-systems`
+Find all systems bound to a JumpCloud user.
+
+```bash
+jam users bound-systems [USER_ID]
+```
+
+**Examples:**
+```bash
+jam users bound-systems 685cb0f6ef36c7bd8ac56c24
+```
+
 ### System Commands
 
 System commands are accessed via the `systems` subcommand group.
@@ -147,11 +160,13 @@ jam systems get [SYSTEM_ID] [OPTIONS]
 **Options:**
 - `SYSTEM_ID` - A valid UUID for a JumpCloud system
 - `--full` - Display all available fields
+- `--json FILE` - Export system to a JSON file
 
 **Examples:**
 ```bash
 jam systems get 69879fa9b5be2f2184d700da
 jam systems get 69879fa9b5be2f2184d700da --full
+jam systems get 69879fa9b5be2f2184d700da --json system.json
 ```
 
 #### `systems find`
@@ -179,16 +194,16 @@ jam systems fde-key [SYSTEM_ID]
 jam systems fde-key 69879fa9b5be2f2184d700da
 ```
 
-#### `systems bound`
-Find all systems bound to a JumpCloud user.
+#### `systems bound-users`
+Find all users bound to a JumpCloud system.
 
 ```bash
-jam systems bound [USER_ID]
+jam systems bound-users [SYSTEM_ID]
 ```
 
 **Examples:**
 ```bash
-jam systems bound 685cb0f6ef36c7bd8ac56c24
+jam systems bound-users 69879fa9b5be2f2184d700da
 ```
 
 ## Piping Commands
@@ -200,10 +215,13 @@ Commands support Unix pipes, allowing you to chain operations:
 jam users find user@example.com | jam users get
 
 # Find a user and list their bound systems
-jam users find user@example.com | jam systems bound
+jam users find user@example.com | jam users bound-systems
 
 # Find a system and get its FDE key
 jam systems find DESKTOP-ABC123 | jam systems fde-key
+
+# Find a system and list its bound users
+jam systems find DESKTOP-ABC123 | jam systems bound-users
 ```
 
 ## Configuration

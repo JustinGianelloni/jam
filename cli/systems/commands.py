@@ -92,15 +92,15 @@ def find_system(
     presenter.find_system(query)
 
 
-@app.command(name="bound")
-def bound_systems(
-    user_id: str | None = typer.Argument(
+@app.command(name="bound-users")
+def list_user_associations(
+    system_id: str | None = typer.Argument(
         None,
-        help="A valid UUID for a JumpCloud user, e.g. '685cb0f6ef36c7bd8ac56c24'",
+        help="A valid UUID for a JumpCloud system, e.g. '69879fa9b5be2f2184d700da'",
     ),
 ) -> None:
     """
-    Find all systems bound to a JumpCloud user by the user's UUID. If the query returns multiple results, a table of matching systems will be displayed instead of a list of UUIDs.
+    Find all users bound to a system.
     """
-    user_id = resolve_argument(user_id, "User ID")
-    presenter.list_bound_systems(user_id)
+    system_id = resolve_argument(system_id, "System ID")
+    presenter.list_user_associations(system_id)
