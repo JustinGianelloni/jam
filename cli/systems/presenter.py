@@ -6,7 +6,6 @@ from cli.output import (
     print_table,
     print_value,
     save_to_csv,
-    save_to_json,
 )
 from core.client import get_client
 from core.settings import get_settings
@@ -32,13 +31,10 @@ def _add_system_rows(table, systems: list) -> None:
         table.add_row(*row_values)
 
 
-def get_system(system_id: str, full: bool, json_file: str | None) -> None:
+def get_system(system_id: str, json: bool) -> None:
     """Get and display a single system."""
     system = api.get_system(get_client(), system_id)
-    if json_file:
-        save_to_json(system, json_file)
-        return
-    if full:
+    if json:
         print_json(system)
         return
     table = _get_system_table("System")

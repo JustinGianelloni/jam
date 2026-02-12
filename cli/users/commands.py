@@ -63,18 +63,19 @@ def get_user(
         None,
         help="A valid UUID for a JumpCloud user, e.g. '685cb0f6ef36c7bd8ac56c24'",
     ),
-    full: bool = typer.Option(
-        False, "--full", is_flag=True, help="Display all available fields"
-    ),
-    json_file: str | None = typer.Option(
-        None, "--json", help="Export user to specified JSON file"
+    json: bool = typer.Option(
+        False,
+        "-j",
+        "--json",
+        is_flag=True,
+        help="Return a full JSON model of the user.",
     ),
 ) -> None:
     """
     Get a JumpCloud system user by their UUID. Use 'find-user' to get a user's UUID by their email address.
     """
     user_id = resolve_argument(user_id, "User ID")
-    presenter.get_user(user_id, full, json_file)
+    presenter.get_user(user_id, json)
 
 
 @app.command(name="find")

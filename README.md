@@ -9,7 +9,8 @@ A command-line interface for managing JumpCloud users and systems.
 - Retrieve full disk encryption (FDE) keys
 - Find systems bound to specific users
 - Find users bound to specific systems
-- Export data to CSV and JSON files
+- Export data to CSV files
+- Output full JSON models to console (pipe to file with `>`)
 - Supports Unix pipes for command chaining
 - Optional 1Password integration for credential management
 
@@ -90,14 +91,13 @@ jam users get [USER_ID] [OPTIONS]
 
 **Options:**
 - `USER_ID` - A valid UUID for a JumpCloud user
-- `--full` - Display all available fields
-- `--json FILE` - Export user to a JSON file
+- `-j`, `--json` - Return full JSON model of the user
 
 **Examples:**
 ```bash
 jam users get 685cb0f6ef36c7bd8ac56c24
-jam users get 685cb0f6ef36c7bd8ac56c24 --full
-jam users get 685cb0f6ef36c7bd8ac56c24 --json user.json
+jam users get 685cb0f6ef36c7bd8ac56c24 --json
+jam users get 685cb0f6ef36c7bd8ac56c24 -j > user.json
 ```
 
 #### `users find`
@@ -159,14 +159,13 @@ jam systems get [SYSTEM_ID] [OPTIONS]
 
 **Options:**
 - `SYSTEM_ID` - A valid UUID for a JumpCloud system
-- `--full` - Display all available fields
-- `--json FILE` - Export system to a JSON file
+- `-j`, `--json` - Return full JSON model of the system
 
 **Examples:**
 ```bash
 jam systems get 69879fa9b5be2f2184d700da
-jam systems get 69879fa9b5be2f2184d700da --full
-jam systems get 69879fa9b5be2f2184d700da --json system.json
+jam systems get 69879fa9b5be2f2184d700da --json
+jam systems get 69879fa9b5be2f2184d700da -j > system.json
 ```
 
 #### `systems find`
