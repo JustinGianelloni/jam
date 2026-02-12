@@ -48,21 +48,22 @@ def get_system(
         None,
         help="A valid UUID for a JumpCloud system, e.g. '69879fa9b5be2f2184d700da'",
     ),
-    full: bool = typer.Option(
+    json: bool = typer.Option(
         False,
-        "--full",
+        "-j",
+        "--json",
         is_flag=True,
-        help="Display all available fields",
-    ),
-    json_file: str | None = typer.Option(
-        None, "--json", help="Export system to specified JSON file"
+        help="Return a full JSON model of the system.",
     ),
 ) -> None:
     """
     Get a JumpCloud system by its UUID.
     """
     system_id = resolve_argument(system_id, "System ID")
-    presenter.get_system(system_id, full, json_file)
+    presenter.get_system(
+        system_id,
+        json,
+    )
 
 
 @app.command(name="fde-key")

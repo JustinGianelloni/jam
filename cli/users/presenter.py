@@ -6,7 +6,6 @@ from cli.output import (
     print_table,
     print_value,
     save_to_csv,
-    save_to_json,
 )
 from core.client import get_client
 from core.settings import get_settings
@@ -32,13 +31,10 @@ def _add_user_rows(table, users: list) -> None:
         table.add_row(*row_values)
 
 
-def get_user(user_id: str, full: bool, json_file: str | None) -> None:
+def get_user(user_id: str, json: bool) -> None:
     """Get and display a single user."""
     user = api.get_user(get_client(), user_id)
-    if json_file:
-        save_to_json(user, json_file)
-        return
-    if full:
+    if json:
         print_json(user)
         return
     table = _get_user_table("System User")

@@ -27,7 +27,9 @@ def print_value(value: Any) -> None:
 
 
 def print_json(model: BaseModel) -> None:
-    CONSOLE.print(model.model_dump(mode="json", exclude_none=True))
+    CONSOLE.print(
+        json.dumps(model.model_dump(mode="json", exclude_none=True), indent=2)
+    )
 
 
 def save_to_csv(
@@ -46,13 +48,3 @@ def save_to_csv(
             [item.model_dump(include=set(fieldnames)) for item in items]
         )
     CONSOLE.print(f"Exported {len(items)} items to '{file_path}'.")
-
-
-def save_to_json(model: BaseModel, filename: str) -> None:
-    OUTPUT_DIR.mkdir(exist_ok=True)
-    file_path = OUTPUT_DIR / filename
-    with open(file_path, "w") as file:
-        json.dump(
-            model.model_dump(mode="json", exclude_none=True), file, indent=2
-        )
-    CONSOLE.print(f"Exported to '{file_path}'.")
