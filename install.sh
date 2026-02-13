@@ -67,6 +67,13 @@ if (( use_op )); then
   get_op_creds
 fi
 
+# Add local config files to .gitignore to prevent syncing upstream
+echo "Adding local config files to .gitignore..."
+{
+  echo "*.toml"
+  echo ".gitignore"
+} >> .gitignore
+
 # Check if alias already exists, add if it doesn't
 if grep -qF "alias jam=" ~/.zshrc; then
   echo "Alias for jam already exists. If issues persist, check your .zshrc file."
