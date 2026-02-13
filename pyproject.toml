@@ -45,7 +45,7 @@ local_tz = "US/Eastern"
 [tool.jam.console_system_fields]
 "ID" = "id"
 "Hostname" = "hostname"
-"Last Contact" = "pretty_last_contact"
+"Last Contact (Local)" = "pretty_last_contact"
 "OS" = "pretty_os"
 "Serial" = "serial_number"
 

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from httpx import Client, Response
+from httpx import AsyncClient, Response
 from pydantic import BaseModel
 from pytz import utc
 
@@ -74,17 +74,10 @@ class TokenFactory:
 
 @lru_cache
 def get_token_factory() -> TokenFactory:
-    """Return a cached singleton instance of TokenFactory."""
     return TokenFactory()
 
 
-def get_client() -> Client:
-    """
-    Return a configured HTTP client.
-
-    Note: Not cached because the authorization token may expire.
-    The TokenFactory handles token refresh internally.
-    """
+def get_client() -> AsyncClient:
     settings = get_settings()
     token_factory = get_token_factory()
     headers: dict[str, Any] = {
@@ -92,7 +85,7 @@ def get_client() -> Client:
         "Content-Type": "application/json",
         "Authorization": token_factory.get_token(),
     }
-    return Client(
+    return AsyncClient(
         base_url=settings.api_url,
         headers=headers,
         timeout=settings.timeout,

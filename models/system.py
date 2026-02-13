@@ -7,8 +7,8 @@ from core.settings import get_settings
 
 
 class Relationship(BaseModel):
-    id: str | None = None
-    type: str | None = None
+    id: str
+    type: str
 
 
 class Association(BaseModel):
