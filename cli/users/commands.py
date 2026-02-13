@@ -1,7 +1,14 @@
+import asyncio
+
 import typer
 
-from cli.input import resolve_argument
-from cli.users import presenter
+from api import systems as sys_api
+from api import users as usr_api
+from cli.input import resolve_argument, resolve_list_argument
+from cli.output import save_to_csv
+from cli.systems import presenter as sys_presenter
+from cli.users import presenter as usr_presenter
+from core.settings import get_settings
 
 app = typer.Typer()
 
@@ -36,6 +43,13 @@ def list_users(
         "--state",
         help="Filter users by their state in JumpCloud, e.g. 'ACTIVATED', 'SUSPENDED', or 'STAGED'",
     ),
+    json: bool = typer.Option(
+        False,
+        "-j",
+        "--json",
+        is_flag=True,
+        help="Return a full JSON model of the user(s).",
+    ),
 ) -> None:
     """
     List all system users in JumpCloud.
@@ -54,12 +68,15 @@ def list_users(
         filters.append(f"jobTitle:$eq:{title}")
     if state:
         filters.append(f"state:$eq:{state}")
-    presenter.list_users(filters, csv_file)
+    users = asyncio.run(usr_api.list_users(filters))
+    usr_presenter.print_users(users, json)
+    if csv_file:
+        save_to_csv(users, csv_file, get_settings().csv_user_fields)
 
 
 @app.command(name="get")
 def get_user(
-    user_id: str | None = typer.Argument(
+    user_ids: list[str] | None = typer.Argument(
         None,
         help="A valid UUID for a JumpCloud user, e.g. '685cb0f6ef36c7bd8ac56c24'",
     ),
@@ -74,8 +91,9 @@ def get_user(
     """
     Get a JumpCloud system user by their UUID. Use 'find-user' to get a user's UUID by their email address.
     """
-    user_id = resolve_argument(user_id, "User ID")
-    presenter.get_user(user_id, json)
+    user_ids = resolve_list_argument(user_ids)
+    users = asyncio.run(usr_api.get_users(user_ids))
+    usr_presenter.print_users(users, json)
 
 
 @app.command(name="find")
@@ -83,12 +101,20 @@ def find_user(
     email: str | None = typer.Argument(
         None, help="A valid email address for a JumpCloud user."
     ),
+    json: bool = typer.Option(
+        False,
+        "-j",
+        "--json",
+        is_flag=True,
+        help="Return a full JSON model of the user(s).",
+    ),
 ) -> None:
     """
     Find a JumpCloud user's UUID by their email address. If the query returns multiple results, a table of matching users will be displayed instead of a single UUID.
     """
     email = resolve_argument(email, "Email")
-    presenter.find_user(email)
+    users = asyncio.run(usr_api.find_user(email))
+    usr_presenter.print_users(users, json)
 
 
 @app.command(name="bound-systems")
@@ -97,9 +123,18 @@ def bound_systems(
         None,
         help="A valid UUID for a JumpCloud user, e.g. '685cb0f6ef36c7bd8ac56c24'",
     ),
+    json: bool = typer.Option(
+        False,
+        "-j",
+        "--json",
+        is_flag=True,
+        help="Return a full JSON model of the system(s).",
+    ),
 ) -> None:
     """
     Find all systems bound to a JumpCloud user by the user's UUID. If the query returns multiple results, a table of matching systems will be displayed instead of a list of UUIDs.
     """
     user_id = resolve_argument(user_id, "User ID")
-    presenter.list_bound_systems(user_id)
+    system_ids = asyncio.run(usr_api.list_bound_systems(user_id))
+    systems = asyncio.run(sys_api.get_systems(system_ids))
+    sys_presenter.print_systems(systems, json)

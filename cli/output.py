@@ -1,4 +1,5 @@
 import json
+import sys
 from csv import DictWriter
 from pathlib import Path
 from typing import Any, Sequence
@@ -9,6 +10,10 @@ from rich.table import Table
 
 CONSOLE = Console()
 OUTPUT_DIR = Path(__file__).parent.parent / "output"
+
+
+def is_piped() -> bool:
+    return not sys.stdout.isatty()
 
 
 def create_table(title: str, columns: Sequence[str]) -> Table:
@@ -22,14 +27,26 @@ def print_table(table: Table) -> None:
     CONSOLE.print(table)
 
 
-def print_value(value: Any) -> None:
-    CONSOLE.print(value)
+def print_values(values: list[Any]) -> None:
+    print("\n".join(values))
 
 
-def print_json(model: BaseModel) -> None:
-    CONSOLE.print(
-        json.dumps(model.model_dump(mode="json", exclude_none=True), indent=2)
-    )
+def print_json(models: Sequence[BaseModel]) -> None:
+    if not models:
+        output = "No results match your query."
+    elif len(models) == 1:
+        output = json.dumps(
+            models[0].model_dump(mode="json", exclude_none=True), indent=2
+        )
+    else:
+        output = [
+            json.dumps(m.model_dump(mode="json", exclude_none=True))
+            for m in models
+        ]
+    if is_piped():
+        print(output)
+    else:
+        CONSOLE.print(output)
 
 
 def save_to_csv(

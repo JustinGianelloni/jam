@@ -1,113 +1,141 @@
-from httpx import Client
+import asyncio
+
 from rich.progress import Progress
 
+from core.client import get_client
 from core.settings import get_settings
 from models.user import MFA, User
 
 
-def list_users(client: Client, filters: list[str] | None = None) -> list[User]:
+async def list_users(filters: list[str] | None = None) -> list[User]:
     settings = get_settings()
     endpoint = "/systemusers"
-    params = {"skip": 0, "limit": settings.limit, "sort": "_id"}
+    base_params = {"limit": settings.limit, "sort": "_id"}
     for i, f in enumerate(filters or []):
-        params[f"filter[{i}]"] = f
-    users: list[User] = []
-    total: int | None = None
-    with Progress() as progress:
-        task = progress.add_task("Fetching users from JumpCloud", total=None)
-        while total is None or params["skip"] < total:
-            response = client.get(endpoint, params=params)
-            response.raise_for_status()
-            body = response.json()
-            if total is None:
-                total = body.get("totalCount", 0)
-                progress.update(task, total=total)
-            users.extend([User(**result) for result in body.get("results")])
-            params["skip"] += settings.limit
-            progress.update(task, completed=params["skip"])
+        base_params[f"filter[{i}]"] = f
+    first_params = {**base_params, "skip": 0}
+    response = await get_client().get(endpoint, params=first_params)
+    response.raise_for_status()
+    body = response.json()
+    total = body.get("totalCount", 0)
+    users = [User(**result) for result in body.get("results")]
+    if len(users) == total:
+        return users
+    async with get_client() as client:
+        with Progress() as progress:
+            work = progress.add_task(
+                "Fetching users from JumpCloud",
+                total=total,
+                completed=settings.limit,
+            )
+            tasks = []
+            skip = settings.limit
+            while skip < total:
+                page_params = {**base_params, "skip": skip}
+                tasks.append(client.get(endpoint, params=page_params))
+                skip += settings.limit
+            for task in asyncio.as_completed(tasks):
+                response = await task
+                response.raise_for_status()
+                results = response.json().get("results")
+                users.extend(User(**result) for result in results)
+                progress.update(work, advance=len(results))
     return users
 
 
-def get_user(client: Client, user_id: str) -> User:
+async def get_user(user_id: str) -> User:
     endpoint = f"/systemusers/{user_id}"
-    response = client.get(endpoint)
+    response = await get_client().get(endpoint)
     response.raise_for_status()
     return User(**response.json())
 
 
-def update_user(client: Client, user: User) -> User:
+async def get_users(user_ids: list[str]) -> list[User]:
+    with Progress() as progress:
+        work = progress.add_task(
+            f"Fetching {len(user_ids)} users from JumpCloud",
+            total=len(user_ids),
+        )
+        tasks = [get_user(user_id) for user_id in user_ids]
+        users: list[User] = []
+        for task in asyncio.as_completed(tasks):
+            user = await task
+            users.append(user)
+            progress.update(work, advance=1)
+    return users
+
+
+async def update_user(user: User) -> User:
     endpoint = f"/systemusers/{user.id}"
     data = user.model_dump(mode="json")
-    response = client.put(endpoint, data=data)
+    response = await get_client().put(endpoint, data=data)
     response.raise_for_status()
     return User(**response.json())
 
 
-def expire_password(client: Client, user_id: str) -> None:
+async def expire_password(user_id: str) -> None:
     endpoint = f"/systemusers/{user_id}/expire"
-    response = client.post(endpoint)
+    response = await get_client().post(endpoint)
     response.raise_for_status()
 
 
-def update_mfa_properties(
-    client: Client, user_id: str, enabled: bool, mfa: MFA
-) -> None:
+async def update_mfa_properties(user_id: str, enabled: bool, mfa: MFA) -> None:
     endpoint = f"/systemusers/{user_id}/mfa/enforce"
     data = {
         "enable_user_portal_multifactor": enabled,
         "mfa": mfa,
     }
-    response = client.post(endpoint, data=data)
+    response = await get_client().post(endpoint, data=data)
     response.raise_for_status()
 
 
-def sync_mfa_enrollment_status(client: Client, user_id: str) -> None:
+async def sync_mfa_enrollment_status(user_id: str) -> None:
     endpoint = f"/systemusers/{user_id}/mfasync"
-    response = client.post(endpoint)
+    response = await get_client().post(endpoint)
     response.raise_for_status()
 
 
-def force_set_password(client: Client, user_id: str, password: str) -> None:
+async def force_set_password(user_id: str, password: str) -> None:
     endpoint = f"/systemusers/{user_id}/password"
     data = {
         "password": password,
     }
-    response = client.post(endpoint, data=data)
+    response = await get_client().post(endpoint, data=data)
     response.raise_for_status()
 
 
-def reactivate_user(client: Client, user_id: str) -> None:
+async def reactivate_user(user_id: str) -> None:
     endpoint = f"/systemusers/{user_id}/reactivate"
-    response = client.post(endpoint)
+    response = await get_client().post(endpoint)
     response.raise_for_status()
 
 
-def reset_mfa_token(client: Client, user_id: str, mfa: MFA) -> None:
+async def reset_mfa_token(user_id: str, mfa: MFA) -> None:
     endpoint = f"/systemusers/{user_id}/resetmfa"
     data = mfa.model_dump(mode="json", exclude={"configured"})
-    response = client.post(endpoint, data=data)
+    response = await get_client().post(endpoint, data=data)
     response.raise_for_status()
 
 
-def activate_user(client: Client, user_id: str) -> None:
+async def activate_user(user_id: str) -> None:
     endpoint = f"/systemusers/{user_id}/activate"
-    response = client.post(endpoint)
+    response = await get_client().post(endpoint)
     response.raise_for_status()
 
 
-def suspend_user(client: Client, user_id: str) -> None:
+async def suspend_user(user_id: str) -> None:
     endpoint = f"/systemusers/{user_id}/state/suspend"
-    response = client.post(endpoint)
+    response = await get_client().post(endpoint)
     response.raise_for_status()
 
 
-def unlock_user(client: Client, user_id: str) -> None:
+async def unlock_user(user_id: str) -> None:
     endpoint = f"/systemusers/{user_id}/unlock"
-    response = client.post(endpoint)
+    response = await get_client().post(endpoint)
     response.raise_for_status()
 
 
-def find_user(client: Client, email: str) -> list[User]:
+async def find_user(email: str) -> list[User]:
     endpoint = "/search/systemusers"
     data = {
         "searchFilter": {
@@ -115,15 +143,15 @@ def find_user(client: Client, email: str) -> list[User]:
             "fields": ["email"],
         },
     }
-    response = client.post(endpoint, json=data)
+    response = await get_client().post(endpoint, json=data)
     response.raise_for_status()
     body = response.json()
     return [User(**result) for result in body.get("results")]
 
 
-def list_bound_systems(client: Client, user_id: str) -> list[str]:
+async def list_bound_systems(user_id: str) -> list[str]:
     endpoint = f"/v2/users/{user_id}/systems"
-    response = client.get(endpoint)
+    response = await get_client().get(endpoint)
     response.raise_for_status()
     body = response.json()
     return [result.get("id") for result in body]
