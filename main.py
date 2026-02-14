@@ -3,6 +3,8 @@ from pathlib import Path
 
 import typer
 
+from cli.config import app as config_app
+
 
 def discover_modules() -> list[str]:
     cli_path = Path(__file__).parent / "cli"
@@ -21,6 +23,7 @@ def main() -> None:
     for module in discover_modules():
         cmd = importlib.import_module(f"cli.{module}.commands")
         app.add_typer(cmd.app, name=module)
+    app.add_typer(config_app, name="config")
     app()
 
 

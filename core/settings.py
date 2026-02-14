@@ -1,13 +1,28 @@
 from functools import lru_cache
-from typing import Tuple, Type
+from typing import Any
 
 from pydantic import Field
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
-    PyprojectTomlConfigSettingsSource,
     SettingsConfigDict,
+    TomlConfigSettingsSource,
 )
+
+from core.config import init_config
+
+
+class JamConfigSource(TomlConfigSettingsSource):
+    def __init__(self, settings_cls: type[BaseSettings]):
+        config_path = init_config()
+        super().__init__(settings_cls, config_path)
+
+    def get_field_value(self, field: Any, field_name: str) -> tuple[Any, str, bool]:
+        toml_data = self._read_files(self.toml_file_path)
+        jam_config = toml_data.get("jam", {})
+        if field_name in jam_config:
+            return jam_config[field_name], field_name, False
+        return None, field_name, False
 
 
 class Settings(BaseSettings):
@@ -31,17 +46,17 @@ class Settings(BaseSettings):
     @classmethod
     def settings_customise_sources(
         cls,
-        settings_cls: Type[BaseSettings],
+        settings_cls: type[BaseSettings],
         init_settings: PydanticBaseSettingsSource,
         env_settings: PydanticBaseSettingsSource,
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
-    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
         return (
             init_settings,
             env_settings,
             dotenv_settings,
-            PyprojectTomlConfigSettingsSource(settings_cls),
+            JamConfigSource(settings_cls),
         )
 
     @property
