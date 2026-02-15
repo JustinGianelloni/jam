@@ -39,7 +39,8 @@ class FDE(BaseModel):
 class Internal(BaseModel):
     device_id: str | None = Field(default=None, alias="deviceId")
     windows_device_id: str | None = Field(
-        default=None, alias="windowsDeviceId"
+        default=None,
+        alias="windowsDeviceId",
     )
 
 
@@ -53,10 +54,11 @@ class MDM(BaseModel):
     internal: Internal | None = None
     lost_mode_status: str | None = Field(default=None, alias="lostModeStatus")
     profile_identifier: str | None = Field(
-        default=None, alias="profileIdentifier"
+        default=None,
+        alias="profileIdentifier",
     )
     provider_id: str | None = Field(default=None, alias="profileId")
-    userApproved: bool | None = Field(default=None, alias="userApproved")
+    user_approved: bool | None = Field(default=None, alias="userApproved")
     vendor: str | None = None
     windows: Windows | None = None
 
@@ -70,7 +72,8 @@ class NetworkInterface(BaseModel):
 
 class OSVersionDetail(BaseModel):
     distribution_name: str | None = Field(
-        default=None, alias="distributionName"
+        default=None,
+        alias="distributionName",
     )
     major: str | None = None
     major_number: int | None = Field(default=None, alias="majorNumber")
@@ -113,7 +116,7 @@ class SecureLogin(BaseModel):
 
 class ServiceAccountState(BaseModel):
     has_secure_token: bool = Field(alias="hasSecureToken")
-    password_APFS_valid: bool = Field(alias="passwordAPFSValid")
+    password_apfs_valid: bool = Field(alias="passwordAPFSValid")
     password_od_valid: bool = Field(alias="passwordODValid")
 
 
@@ -138,33 +141,41 @@ class System(BaseModel):
     id: str = Field(alias="_id")
     active: bool | None = None
     agent_has_full_disk_access: bool | None = Field(
-        default=None, alias="agentHasFullDiskAccess"
+        default=None,
+        alias="agentHasFullDiskAccess",
     )
     agent_version: str | None = Field(default=None, alias="agentVersion")
     allow_multifactor_authentication: bool | None = Field(
-        default=None, alias="allowMultiFactorAuthentication"
+        default=None,
+        alias="allowMultiFactorAuthentication",
     )
     allow_public_key_authentication: bool | None = Field(
-        default=None, alias="allowPublicKeyAuthentication"
+        default=None,
+        alias="allowPublicKeyAuthentication",
     )
     allow_ssh_password_authentication: bool | None = Field(
-        default=None, alias="allowSshPasswordAuthentication"
+        default=None,
+        alias="allowSshPasswordAuthentication",
     )
     allow_ssh_root_login: bool | None = Field(
-        default=None, alias="allowSshRootLogin"
+        default=None,
+        alias="allowSshRootLogin",
     )
     amazon_instance_id: str | None = Field(
-        default=None, alias="amazonInstanceID"
+        default=None,
+        alias="amazonInstanceID",
     )
     arch: str | None = None
     arch_family: str | None = Field(default=None, alias="archFamily")
     attributes: list[Attribute] | None = None
     azure_ad_joined: bool | None = Field(default=None, alias="azureAdJoined")
     built_in_commands: list[BuiltInCommands] | None = Field(
-        default=None, alias="builtInCommands"
+        default=None,
+        alias="builtInCommands",
     )
     connection_history: list[str] | None = Field(
-        default=None, alias="connectionHistory"
+        default=None,
+        alias="connectionHistory",
     )
     created: datetime | None = None
     description: str | None = None
@@ -175,7 +186,8 @@ class System(BaseModel):
     fde: FDE | None = None
     file_system: str | None = Field(default=None, alias="fileSystem")
     has_service_account: bool | None = Field(
-        default=None, alias="hasServiceAccount"
+        default=None,
+        alias="hasServiceAccount",
     )
     hostname: str | None = None
     hw_vendor: str | None = Field(default=None, alias="hwVendor")
@@ -183,45 +195,55 @@ class System(BaseModel):
     last_contact: datetime | None = Field(default=None, alias="lastContact")
     mdm: MDM | None = None
     modify_sshd_config: bool | None = Field(
-        default=None, alias="modifySSHDConfig"
+        default=None,
+        alias="modifySSHDConfig",
     )
     network_interfaces: list[NetworkInterface] | None = Field(
-        default=None, alias="networkInterfaces"
+        default=None,
+        alias="networkInterfaces",
     )
     organization: str | None = None
     os: str | None = None
     os_family: str | None = Field(default=None, alias="osFamily")
     os_version_detail: OSVersionDetail | None = Field(
-        default=None, alias="osVersionDetail"
+        default=None,
+        alias="osVersionDetail",
     )
     policy_stats: PolicyStats | None = Field(default=None, alias="policyStats")
     primary_system_user: PrimarySystemUser | None = Field(
-        default=None, alias="primarySystemUser"
+        default=None,
+        alias="primarySystemUser",
     )
     provision_metadata: ProvisionMetadata | None = Field(
-        default=None, alias="provisionMetadata"
+        default=None,
+        alias="provisionMetadata",
     )
     remote_assist_agent_version: str | None = Field(
-        default=None, alias="remoteAssistAgentVersion"
+        default=None,
+        alias="remoteAssistAgentVersion",
     )
     remote_ip: str | None = Field(default=None, alias="remoteIP")
     secure_login: SecureLogin | None = Field(default=None, alias="secureLogin")
     serial_number: str | None = Field(default=None, alias="serialNumber")
     service_account_state: ServiceAccountState | None = Field(
-        default=None, alias="serviceAccountState"
+        default=None,
+        alias="serviceAccountState",
     )
     ssh_root_enabled: bool | None = Field(default=None, alias="sshRootEnabled")
     sshd_params: list[SSHDParam] | None = Field(
-        default=None, alias="sshdParams"
+        default=None,
+        alias="sshdParams",
     )
     system_insights: SystemInsights | None = Field(
-        default=None, alias="systemInsights"
+        default=None,
+        alias="systemInsights",
     )
     system_timezone: int | None = Field(default=None, alias="systemTimezone")
     tags: list[str] | None = None
     template_name: str | None = Field(default=None, alias="templateName")
     user_metrics: list[UserMetric] | None = Field(
-        default=None, alias="userMetrics"
+        default=None,
+        alias="userMetrics",
     )
     version: str | None = None
 
@@ -235,18 +257,24 @@ class System(BaseModel):
 
     @property
     def pretty_os(self) -> str:
-        match self.os:
-            case "Windows":
-                return "[blue]Windows[/blue]"
-            case "Mac OS X":
-                return "[magenta]Mac OS X[/magenta]"
-            case "Ubuntu":
-                return "[yellow]Ubuntu[/yellow]"
-            case "Android":
-                return "[green]Android[/green]"
-            case "iOS":
-                return "[purple]iOS[/purple]"
-            case "iPadOS":
-                return "[magenta]iPadOS[/magenta]"
-            case _:
-                return self.os_family
+        os = {
+            "Windows": "[blue]Windows[/blue]",
+            "Mac OS X": "[magenta]Mac OS X[/magenta]",
+            "Ubuntu": "[yellow]Ubuntu[/yellow]",
+            "Android": "[green]Android[/green]",
+            "iOS": "[purple]iOS[/purple]",
+            "iPadOS": "[magenta]iPadOS[/magenta]",
+        }
+        return os.get(self.os, f"[red]{self.os}[/red]")
+
+    @property
+    def pretty_os_family(self) -> str:
+        os_family = {
+            "windows": "[blue]windows[/blue]",
+            "darwin": "[magenta]darwin[/magenta]",
+            "linux": "[yellow]linux[/yellow]",
+            "android": "[green]android[/green]",
+            "ios": "[purple]ios[/purple]",
+            "ipados": "[magenta]ipados[/magenta]",
+        }
+        return os_family.get(self.os_family, f"[red]{self.os_family}[/red]")

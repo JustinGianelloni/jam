@@ -2,6 +2,7 @@ from functools import lru_cache
 from typing import Any
 
 from pydantic import Field
+from pydantic.fields import FieldInfo
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -13,11 +14,15 @@ from core.config import init_config
 
 
 class JamConfigSource(TomlConfigSettingsSource):
-    def __init__(self, settings_cls: type[BaseSettings]):
+    def __init__(self, settings_cls: type[BaseSettings]) -> None:
         config_path = init_config()
         super().__init__(settings_cls, config_path)
 
-    def get_field_value(self, field: Any, field_name: str) -> tuple[Any, str, bool]:
+    def get_field_value(
+        self,
+        field: FieldInfo,  # noqa: ARG002
+        field_name: str,
+    ) -> tuple[Any, str, bool]:
         toml_data = self._read_files(self.toml_file_path)
         jam_config = toml_data.get("jam", {})
         if field_name in jam_config:
@@ -50,7 +55,7 @@ class Settings(BaseSettings):
         init_settings: PydanticBaseSettingsSource,
         env_settings: PydanticBaseSettingsSource,
         dotenv_settings: PydanticBaseSettingsSource,
-        file_secret_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,  # noqa: ARG003
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         return (
             init_settings,

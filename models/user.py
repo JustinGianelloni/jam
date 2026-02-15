@@ -36,7 +36,8 @@ class MFA(BaseModel):
     exclusion: bool
     exclusion_days: int | None = Field(default=None, alias="exclusionDays")
     exclusion_until: datetime | None = Field(
-        default=None, alias="exclusionUntil"
+        default=None,
+        alias="exclusionUntil",
     )
 
 
@@ -94,24 +95,27 @@ class User(BaseModel):
     alternate_email: str | None = Field(default=None, alias="alternateEmail")
     attribute: list[Attribute] | None = None
     bad_login_attempts: int | None = Field(
-        default=None, alias="badLoginAttempts"
+        default=None,
+        alias="badLoginAttempts",
     )
     company: str | None = None
     cost_center: str | None = Field(default=None, alias="costCenter")
     created: datetime
     creation_source: str | None = Field(default=None, alias="creationSource")
     delegated_authority: DelegatedAuthority | None = Field(
-        default=None, alias="delegatedAuthority"
+        default=None,
+        alias="delegatedAuthority",
     )
     department: str | None = None
     description: str | None = None
     disable_device_max_login_attempts: bool = Field(
-        alias="disableDeviceMaxLoginAttempts"
+        alias="disableDeviceMaxLoginAttempts",
     )
     display_name: str | None = Field(default=None, alias="displayname")
     email: str
     employee_identifier: str | None = Field(
-        default=None, alias="employeeIdentifier"
+        default=None,
+        alias="employeeIdentifier",
     )
     employee_type: str | None = Field(default=None, alias="employeeType")
     enabled_managed_uid: bool | None = None
@@ -137,15 +141,18 @@ class User(BaseModel):
     password_never_expires: bool
     passwordless_sudo: bool
     phone_numbers: list[PhoneNumber] | None = Field(
-        default=None, alias="phoneNumbers"
+        default=None,
+        alias="phoneNumbers",
     )
     public_key: str | None = None
     recovery_email: RecoveryEmail | None = Field(
-        default=None, alias="recoveryEmail"
+        default=None,
+        alias="recoveryEmail",
     )
     relationships: list[Relationship] | None = None
     restricted_fields: list[RestrictedField] | None = Field(
-        default=None, alias="restrictedFields"
+        default=None,
+        alias="restrictedFields",
     )
     samba_service_user: bool
     ssh_keys: list[SSHKey] | None = None

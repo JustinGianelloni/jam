@@ -1,3 +1,5 @@
+from rich.table import Table
+
 from cli.output import (
     create_table,
     is_piped,
@@ -9,13 +11,14 @@ from core.settings import get_settings
 from models.system import System
 
 
-def _get_system_table(title: str):
+def _get_system_table(title: str) -> Table:
     return create_table(
-        title, list(get_settings().console_system_fields.keys())
+        title,
+        list(get_settings().console_system_fields.keys()),
     )
 
 
-def _add_system_rows(table, systems: list[System]) -> None:
+def _add_system_rows(table: Table, systems: list[System]) -> None:
     settings = get_settings()
     for system in systems:
         row_values = [

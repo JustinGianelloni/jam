@@ -28,18 +28,18 @@ class TokenFactory:
 
     def _load(self) -> TokenState:
         try:
-            with open(TOKEN_FILE, "r") as file:
+            with Path.open(TOKEN_FILE) as file:
                 return TokenState.model_validate_json(file.read())
         except FileNotFoundError:
             return TokenState()
 
     def _save(self) -> None:
-        with open(TOKEN_FILE, "w") as file:
+        with Path.open(TOKEN_FILE, "w") as file:
             file.write(self._state.model_dump_json(indent=2))
 
     def _request_token(self) -> None:
         creds: str = b64encode(
-            f"{self._settings.client_id}:{self._settings.client_secret}".encode()
+            f"{self._settings.client_id}:{self._settings.client_secret}".encode(),
         ).decode()
         headers: dict[str, Any] = {
             "Accept": "application/json",
@@ -60,7 +60,7 @@ class TokenFactory:
         body: dict[str, Any] = response.json()
         self._state.access_token = body["access_token"]
         self._state.expires_at = datetime.now(tz=utc) + timedelta(
-            seconds=body["expires_in"]
+            seconds=body["expires_in"],
         )
 
     def get_token(self) -> str:

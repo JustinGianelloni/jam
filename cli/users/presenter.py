@@ -1,22 +1,21 @@
-from api import users as api
+from rich.table import Table
+
 from cli.output import (
-    CONSOLE,
     create_table,
     is_piped,
     print_json,
     print_table,
     print_values,
-    save_to_csv,
 )
 from core.settings import get_settings
 from models.user import User
 
 
-def _get_user_table(title: str):
+def _get_user_table(title: str) -> Table:
     return create_table(title, list(get_settings().console_user_fields.keys()))
 
 
-def _add_user_rows(table, users: list[User]) -> None:
+def _add_user_rows(table: Table, users: list[User]) -> None:
     settings = get_settings()
     for user in users:
         row_values = [

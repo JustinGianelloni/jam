@@ -18,7 +18,7 @@ async def list_systems(filters: list[str] | None = None) -> list[System]:
         base_params[f"filter[{i}]"] = f
     first_params = {**base_params, "skip": 0}
     response = await get_client().get(endpoint, params=first_params)
-    response.raise_for_status
+    response.raise_for_status()
     body = response.json()
     total = body.get("totalCount", 0)
     systems = [System(**result) for result in body.get("results")]

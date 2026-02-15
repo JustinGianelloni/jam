@@ -6,6 +6,7 @@ from rich.console import Console
 
 console = Console()
 
+
 def get_config_dir() -> Path:
     config_dir = Path.home() / ".config" / "jam"
     config_dir.mkdir(parents=True, exist_ok=True)
@@ -55,7 +56,7 @@ def get_default_config() -> dict[str, Any]:
                 "OS": "os",
                 "Serial": "serial_number",
             },
-        }
+        },
     }
 
 
@@ -63,7 +64,7 @@ def init_config() -> Path:
     config_path = get_config_path()
     if not config_path.exists():
         default_config = get_default_config()
-        with open(config_path, "w") as file:
+        with Path.open(config_path, "w") as file:
             tomlkit.dump(default_config, file)
         console.print(f"Created default configuration at: {config_path}")
     return config_path
@@ -71,5 +72,5 @@ def init_config() -> Path:
 
 def load_config() -> dict[str, Any]:
     config_path = init_config()
-    with open(config_path, "r") as file:
+    with Path.open(config_path) as file:
         return tomlkit.load(file)
