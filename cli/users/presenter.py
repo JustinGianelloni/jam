@@ -10,17 +10,18 @@ from cli.output import (
 from core.settings import get_settings
 from models.user import User
 
+SETTINGS = get_settings()
+
 
 def _get_user_table(title: str) -> Table:
-    return create_table(title, list(get_settings().console_user_fields.keys()))
+    return create_table(title, list(SETTINGS.console_user_fields.keys()))
 
 
 def _add_user_rows(table: Table, users: list[User]) -> None:
-    settings = get_settings()
     for user in users:
         row_values = [
             getattr(user, attr)
-            for attr in settings.console_user_fields.values()
+            for attr in SETTINGS.console_user_fields.values()
         ]
         table.add_row(*row_values)
 

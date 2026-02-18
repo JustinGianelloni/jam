@@ -10,20 +10,21 @@ from cli.output import (
 from core.settings import get_settings
 from models.system import System
 
+SETTINGS = get_settings()
+
 
 def _get_system_table(title: str) -> Table:
     return create_table(
         title,
-        list(get_settings().console_system_fields.keys()),
+        list(SETTINGS.console_system_fields.keys()),
     )
 
 
 def _add_system_rows(table: Table, systems: list[System]) -> None:
-    settings = get_settings()
     for system in systems:
         row_values = [
             getattr(system, attr)
-            for attr in settings.console_system_fields.values()
+            for attr in SETTINGS.console_system_fields.values()
         ]
         table.add_row(*row_values)
 

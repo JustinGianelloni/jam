@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field
 
 from core.settings import get_settings
 
+SETTINGS = get_settings()
+
 
 class Relationship(BaseModel):
     id: str
@@ -249,8 +251,7 @@ class System(BaseModel):
 
     @property
     def pretty_last_contact(self) -> str:
-        settings = get_settings()
-        tz = pytz.timezone(settings.local_tz)
+        tz = pytz.timezone(SETTINGS.local_tz)
         if self.last_contact is None:
             return "Never"
         return self.last_contact.astimezone(tz).strftime("%Y-%m-%d %H:%M:%S")

@@ -102,8 +102,8 @@ def fde_key(
     Returns the full disk encryption key for the specified system UUID.
     """
     system_id = resolve_argument(system_id, "System ID")
-    fde_key = asyncio.run(sys_api.get_fde_key(system_id))
-    sys_presenter.print_fde_key(fde_key)
+    key = asyncio.run(sys_api.get_fde_key(system_id))
+    sys_presenter.print_fde_key(key)
 
 
 @app.command(name="find")

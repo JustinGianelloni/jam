@@ -12,7 +12,9 @@ from pytz import utc
 
 from core.settings import get_settings
 
-TOKEN_FILE: Path = Path("token.json")
+SETTINGS = get_settings()
+CONFIG_PATH = Path(SETTINGS.JAM_CONFIG_PATH)
+TOKEN_FILE = CONFIG_PATH / "token.json"
 
 
 class TokenState(BaseModel):
@@ -22,13 +24,12 @@ class TokenState(BaseModel):
 
 class TokenFactory:
     def __init__(self) -> None:
-        self._settings = get_settings()
         self._state = self._load()
         atexit.register(self._save)
 
     def _load(self) -> TokenState:
         try:
-            with Path.open(TOKEN_FILE) as file:
+            with Path.open(TOKEN_FILE, "r") as file:
                 return TokenState.model_validate_json(file.read())
         except FileNotFoundError:
             return TokenState()
@@ -39,7 +40,7 @@ class TokenFactory:
 
     def _request_token(self) -> None:
         creds: str = b64encode(
-            f"{self._settings.client_id}:{self._settings.client_secret}".encode(),
+            f"{SETTINGS.client_id}:{SETTINGS.client_secret}".encode(),
         ).decode()
         headers: dict[str, Any] = {
             "Accept": "application/json",
@@ -51,10 +52,10 @@ class TokenFactory:
             "grant_type": "client_credentials",
         }
         response: Response = httpx.post(
-            self._settings.oauth_url,
+            SETTINGS.oauth_url,
             headers=headers,
             data=data,
-            timeout=self._settings.timeout,
+            timeout=SETTINGS.timeout,
         )
         response.raise_for_status()
         body: dict[str, Any] = response.json()
@@ -78,7 +79,6 @@ def get_token_factory() -> TokenFactory:
 
 
 def get_client() -> AsyncClient:
-    settings = get_settings()
     token_factory = get_token_factory()
     headers: dict[str, Any] = {
         "Accept": "application/json",
@@ -86,7 +86,7 @@ def get_client() -> AsyncClient:
         "Authorization": token_factory.get_token(),
     }
     return AsyncClient(
-        base_url=settings.api_url,
+        base_url=SETTINGS.api_url,
         headers=headers,
-        timeout=settings.timeout,
+        timeout=SETTINGS.timeout,
     )
