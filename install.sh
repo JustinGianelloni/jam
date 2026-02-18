@@ -1,31 +1,43 @@
 #!/bin/bash
+set -euo pipefail
+
+# Configuration
+REPO_URL="https://github.com/JustinGianelloni/jam.git"
+INSTALL_DIR="${JAM_INSTALL_DIR:-$HOME/.local/share/jam}"
+CONFIG_PATH="${JAM_CONFIG_PATH:-$HOME/.config/jam}"
+CONFIG_FILE="$CONFIG_PATH/config.json"
+CONFIG_URL="https://raw.githubusercontent.com/JustinGianelloni/jam/main/default_config.json"
+
 use_op=0
-tools=("jq" "yq" "uv" "fzf")
+shell_rc="${ZDOTDIR:-$HOME}/.zshrc"
+[[ "$SHELL" == */bash ]] && shell_rc="$HOME/.bashrc"
+tools=("jq" "uv" "fzf" "curl" "git")
 
-# Confirm intent and dependencies
-echo "This script assumes you have Homebrew, Git, and 1Password CLI (if selected) installed."
-read -r -e -p "Do you wish to continue? (y/N): " confirm
-if [[ "$confirm" != [yY] && "$confirm" != [yY][eE][sS] ]]; then
-  echo "Installation aborted."
-  exit 1
-else
-  read -r -e -p "Do you wish to retrieve credentials from 1Password? (y/N): " op_confirm
-  if [[ "$op_confirm" == [yY] || "$op_confirm" == [yY][eE][sS] ]]; then
-    use_op=1
+install_pkg() {
+  local pkg=$1
+  if command -v brew &>/dev/null; then
+    brew install "$pkg"
+  elif command -v apt-get &>/dev/null; then
+    sudo apt-get install -y "$pkg"
+  elif command -v dnf &>/dev/null; then
+    sudo dnf install -y "$pkg"
+  elif command -v pacman &>/dev/null; then
+    sudo pacman -S --noconfirm "$pkg"
+  elif command -v apk &>/dev/null; then
+    sudo apk add "$pkg"
+  else
+    echo "Error: No supported package manager found. Install '$pkg' manually."
+    return 1
   fi
-fi
+}
 
-# Install missing dependencies with one brew command
-missing=()
-for tool in "${tools[@]}"; do
-  command -v "$tool" &>/dev/null || missing+=("$tool")
-done
-if (( ${#missing[@]} )); then
-  echo "Installing: ${missing[*]}"
-  brew install "${missing[@]}"
-else
-  echo "All dependencies already installed."
-fi
+install_uv() {
+  if ! command -v uv &>/dev/null; then
+    echo "Installing uv..."
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    export PATH="$HOME/.local/bin:$PATH"
+  fi
+}
 
 choose_field() {
   local prompt_text=$1
@@ -34,8 +46,7 @@ choose_field() {
   fzf --prompt="$prompt_text" --height=10% --reverse | sed 's/.*: //'
 }
 
-# Retrieve credentials from 1Password if selected
-get_op_creds () {
+get_op_creds() {
   read -r -e -p "What is the name of the saved credential in 1Password (e.g. JC_OAUTH)? " op_title
   op_json=$(op item get "$op_title" --format json)
   if [[ -z "$op_json" ]]; then
@@ -51,35 +62,86 @@ get_op_creds () {
     echo "Client ID:      $client_id"
     echo "Client Secret:  $client_secret"
   fi
-  if grep -q '^client_id_uri = ' pyproject.toml; then
-    sed -i '' 's|^client_id_uri = .*|client_id_uri = "'"$client_id"'"|' pyproject.toml
-  else
-    sed -i '' '/^\[tool\.auth\]/a\'$'\n''client_id_uri = "'"$client_id"'"' pyproject.toml
-  fi
-  if grep -q '^client_secret_uri = ' pyproject.toml; then
-    sed -i '' 's|^client_secret_uri = .*|client_secret_uri = "'"$client_secret"'"|' pyproject.toml
-  else
-    sed -i '' '/^\[tool\.auth\]/a\'$'\n''client_secret_uri = "'"$client_secret"'"' pyproject.toml
-  fi
+  jq --arg id "$client_id" --arg secret "$client_secret" \
+    '.jam.auth.client_id_uri = $id | .jam.auth.client_secret_uri = $secret' \
+    "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
 }
 
+# --- Main Installation ---
+
+echo "=== JAM Installer ==="
+echo "This will install JAM and its dependencies."
+echo "  Install directory: $INSTALL_DIR"
+echo "  Config directory:  $CONFIG_PATH"
+echo ""
+
+read -r -e -p "Do you wish to continue? (y/N): " confirm
+if [[ "$confirm" != [yY] && "$confirm" != [yY][eE][sS] ]]; then
+  echo "Installation aborted."
+  exit 1
+fi
+
+read -r -e -p "Do you wish to retrieve credentials from 1Password? (y/N): " op_confirm
+if [[ "$op_confirm" == [yY] || "$op_confirm" == [yY][eE][sS] ]]; then
+  use_op=1
+  tools+=("op")
+fi
+
+# Install missing dependencies (except uv which has its own installer)
+echo "Checking dependencies..."
+missing=()
+for tool in "${tools[@]}"; do
+  [[ "$tool" == "uv" ]] && continue
+  command -v "$tool" &>/dev/null || missing+=("$tool")
+done
+
+if (( ${#missing[@]} )); then
+  echo "Installing missing tools: ${missing[*]}"
+  for pkg in "${missing[@]}"; do
+    install_pkg "$pkg"
+  done
+fi
+
+# Install uv using official installer
+install_uv
+
+# Clone or update the repository
+if [[ -d "$INSTALL_DIR/.git" ]]; then
+  echo "Updating existing installation..."
+  git -C "$INSTALL_DIR" pull --quiet
+else
+  echo "Cloning JAM repository..."
+  mkdir -p "$(dirname "$INSTALL_DIR")"
+  git clone --quiet "$REPO_URL" "$INSTALL_DIR"
+fi
+
+# Create config directory and download default config
+mkdir -p "$CONFIG_PATH"
+if [[ ! -f "$CONFIG_FILE" ]]; then
+  echo "Downloading default configuration..."
+  curl -fsSL "$CONFIG_URL" -o "$CONFIG_FILE"
+else
+  echo "Config file already exists, skipping download."
+fi
+
+# Configure 1Password credentials if selected
 if (( use_op )); then
   get_op_creds
 fi
 
-# Add local config files to .gitignore to prevent syncing upstream
-echo "Adding local config files to .gitignore..."
-{
-  echo "*.toml"
-  echo ".gitignore"
-} >> .gitignore
-
-# Check if alias already exists, add if it doesn't
-if grep -qF "alias jam=" ~/.zshrc; then
-  echo "Alias for jam already exists. If issues persist, check your .zshrc file."
+# Add shell alias
+if grep -qF "alias jam=" "$shell_rc"; then
+  echo "Alias for jam already exists."
 else
-  echo "Adding alias for jam to .zshrc..."
-  script_dir="$(cd "$(dirname "$0")" && pwd)"
-  echo "alias jam=\"${script_dir}/jam.sh\"" >> ~/.zshrc
-  echo "Run 'source ~/.zshrc' or restart your terminal to start using the 'jam' command."
+  echo "Adding alias for jam to $shell_rc..."
+  echo "alias jam=\"$INSTALL_DIR/jam.sh\"" >> "$shell_rc"
 fi
+
+# Export config path in shell rc if not already present
+if ! grep -qF "JAM_CONFIG_PATH" "$shell_rc"; then
+  echo "export JAM_CONFIG_PATH=\"$CONFIG_PATH\"" >> "$shell_rc"
+fi
+
+echo ""
+echo "=== Installation Complete ==="
+echo "Run 'source $shell_rc' or restart your terminal to start using the 'jam' command."

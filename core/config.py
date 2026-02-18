@@ -1,63 +1,47 @@
+import json
+import os
 from pathlib import Path
 from typing import Any
 
+import httpx
 import tomlkit
-from rich.console import Console
 
-console = Console()
+PROJECT_ROOT = Path(__file__).parent.parent
+PYPROJECT_PATH = PROJECT_ROOT / "pyproject.toml"
+
+
+def get_repo_url() -> str:
+    with PYPROJECT_PATH.open() as file:
+        pyproject = tomlkit.load(file)
+    return str(pyproject["project"]["urls"]["Repository"])
+
+
+def get_default_config_url() -> str:
+    repo_url = get_repo_url()
+    # Convert https://github.com/user/repo to https://raw.githubusercontent.com/user/repo/main
+    raw_url = repo_url.replace("github.com", "raw.githubusercontent.com")
+    return f"{raw_url}/main/default_config.json"
 
 
 def get_config_dir() -> Path:
-    config_dir = Path.home() / ".config" / "jam"
+    path = os.getenv("JAM_CONFIG_PATH")
+    if not path:
+        err = "Missing JAM_CONFIG_PATH in environment."
+        raise RuntimeError(err)
+    config_dir = Path(path)
     config_dir.mkdir(parents=True, exist_ok=True)
     return config_dir
 
 
 def get_config_path() -> Path:
-    return get_config_dir() / "config.toml"
+    return get_config_dir() / "config.json"
 
 
 def get_default_config() -> dict[str, Any]:
-    return {
-        "jam": {
-            "api_url": "https://console.jumpcloud.com/api",
-            "oauth_url": "https://admin-oauth.id.jumpcloud.com/oauth2/token",
-            "timeout": 10,
-            "limit": 100,
-            "local_tz": "US/Eastern",
-            "console_user_fields": {
-                "ID": "id",
-                "State": "pretty_state",
-                "Email": "email",
-                "Employee Type": "employee_type",
-                "Job Title": "job_title",
-                "Department": "department",
-            },
-            "csv_user_fields": {
-                "ID": "id",
-                "State": "state",
-                "Email": "email",
-                "Employee Type": "employee_type",
-                "Job Title": "job_title",
-                "Department": "department",
-                "Cost Center": "cost_center",
-            },
-            "console_system_fields": {
-                "ID": "id",
-                "Hostname": "hostname",
-                "Last Contact (Local)": "pretty_last_contact",
-                "OS": "pretty_os",
-                "Serial": "serial_number",
-            },
-            "csv_system_fields": {
-                "ID": "id",
-                "Hostname": "hostname",
-                "Last Contact": "last_contact",
-                "OS": "os",
-                "Serial": "serial_number",
-            },
-        },
-    }
+    url = get_default_config_url()
+    response = httpx.get(url, timeout=10)
+    response.raise_for_status()
+    return response.json()
 
 
 def init_config() -> Path:
@@ -65,12 +49,11 @@ def init_config() -> Path:
     if not config_path.exists():
         default_config = get_default_config()
         with Path.open(config_path, "w") as file:
-            tomlkit.dump(default_config, file)
-        console.print(f"Created default configuration at: {config_path}")
+            json.dump(default_config, file, indent=2)
     return config_path
 
 
 def load_config() -> dict[str, Any]:
     config_path = init_config()
     with Path.open(config_path) as file:
-        return tomlkit.load(file)
+        return json.load(file)

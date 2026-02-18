@@ -1,0 +1,41 @@
+{
+  "jam": {
+    "api_url": "https://console.jumpcloud.com/api",
+    "oauth_url": "https://admin-oauth.id.jumpcloud.com/oauth2/token",
+    "timeout": 10,
+    "limit": 100,
+    "local_tz": "US/Eastern",
+    "console_user_fields": {
+      "ID": "id",
+      "State": "pretty_state",
+      "Email": "email",
+      "Employee Type": "employee_type",
+      "Job Title": "job_title",
+      "Department": "department"
+    },
+    "csv_user_fields": {
+      "ID": "id",
+      "State": "state",
+      "Email": "email",
+      "Employee Type": "employee_type",
+      "Job Title": "job_title",
+      "Department": "department",
+      "Cost Center": "cost_center"
+    },
+    "console_system_fields": {
+      "ID": "id",
+      "Hostname": "hostname",
+      "Last Contact (Local)": "pretty_last_contact",
+      "OS": "pretty_os",
+      "Serial": "serial_number"
+    },
+    "csv_system_fields": {
+      "ID": "id",
+      "Hostname": "hostname",
+      "Last Contact": "last_contact",
+      "OS": "os",
+      "Serial": "serial_number"
+    }
+  }
+}
+

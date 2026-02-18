@@ -45,9 +45,15 @@ def reset_config(
         "--force",
         help="Skip confirmation",
     ),
+    quiet: bool = typer.Option(
+        False,
+        "-q",
+        "--quiet",
+        help="Suppress console output",
+    ),
 ) -> None:
     config_path = get_config_path()
-    if not force:
+    if not force and not quiet:
         console.print(
             "[yellow]This will reset your configuration to defaults.[/yellow]",
         )
@@ -55,11 +61,14 @@ def reset_config(
         if not typer.confirm("Are you sure?"):
             console.print("Reset cancelled.")
             raise typer.Exit(0)
-        if config_path.exists():
-            backup_path = config_path.with_suffix(".toml.backup")
-            config_path.rename(backup_path)
+    if config_path.exists():
+        backup_path = config_path.with_suffix(".toml.backup")
+        config_path.rename(backup_path)
+        if not quiet:
             console.print(
                 f"[dim]Backed up existing config to: {backup_path}[/dim]",
             )
-        init_config()
+    config_path = init_config()
+    if not quiet:
         console.print("[green]Configuration reset to defaults.[/green]")
+        console.print(f"[dim]Configuration saved to: {config_path}[/dim]")
