@@ -19,8 +19,8 @@ def show_path() -> None:
         console.print("[green]File exists[/green]")
     else:
         console.print(
-            "[yellow]File doesn't exist yet and will be created on \
-            first run[/yellow]",
+            "[yellow]File doesn't exist yet and will be created on "
+            "first run[/yellow]",
         )
 
 

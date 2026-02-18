@@ -18,8 +18,8 @@ def list_systems(
     filters: list[str] | None = typer.Option(
         None,
         "--filter",
-        help="Any number of filters using JumpCloud's filter syntax, e.g. \
-        'osFamily:$eq:Windows'",
+        help="Any number of filters using JumpCloud's filter syntax, e.g. "
+        "'osFamily:$eq:Windows'",
     ),
     csv_file: str | None = typer.Option(
         None,
@@ -29,14 +29,14 @@ def list_systems(
     os: str | None = typer.Option(
         None,
         "--os",
-        help="Filter systems by their operating system, e.g. 'Windows', \
-        'Max OS X', or 'Ubuntu'",
+        help="Filter systems by their operating system, e.g. 'Windows', "
+        "'Max OS X', or 'Ubuntu'",
     ),
     os_family: str | None = typer.Option(
         None,
         "--os-family",
-        help="Filter systems by their operating system family, e.g. \
-        'windows', 'darwin', or 'linux'",
+        help="Filter systems by their operating system family, e.g. "
+        "'windows', 'darwin', or 'linux'",
     ),
     json: bool = typer.Option(
         False,
@@ -71,8 +71,8 @@ combined into a single list of filters.
 def get_system(
     system_ids: list[str] | None = typer.Argument(
         None,
-        help="A valid UUID for a JumpCloud system, e.g. \
-        '69879fa9b5be2f2184d700da'",
+        help="A valid UUID for a JumpCloud system, e.g. "
+        "'69879fa9b5be2f2184d700da'",
     ),
     json: bool = typer.Option(
         False,
@@ -94,8 +94,8 @@ def get_system(
 def fde_key(
     system_id: str | None = typer.Argument(
         None,
-        help="A valid UUID for a JumpCloud system, e.g. \
-        '69879fa9b5be2f2184d700da'",
+        help="A valid UUID for a JumpCloud system, e.g. "
+        "'69879fa9b5be2f2184d700da'",
     ),
 ) -> None:
     """
@@ -121,9 +121,9 @@ def find_system(
     ),
 ) -> None:
     """
-    Find a JumpCloud system's UUID by its hostname or serial number. \
-    If the query returns multiple results, a table of matching systems will \
-    be displayed instead of a single UUID.
+Find a JumpCloud system's UUID by its hostname or serial number. \
+If the query returns multiple results, a table of matching systems will \
+be displayed instead of a single UUID.
     """
     query = resolve_argument(query, "Hostname or serial number")
     systems = asyncio.run(sys_api.find_system(query))
@@ -134,8 +134,8 @@ def find_system(
 def list_user_associations(
     system_id: str | None = typer.Argument(
         None,
-        help="A valid UUID for a JumpCloud system, e.g. \
-        '69879fa9b5be2f2184d700da'",
+        help="A valid UUID for a JumpCloud system, e.g. "
+        "'69879fa9b5be2f2184d700da'",
     ),
     json: bool = typer.Option(
         False,

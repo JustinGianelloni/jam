@@ -18,8 +18,8 @@ def list_users(
     filters: list[str] | None = typer.Option(
         None,
         "--filter",
-        help="Any number of filters using JumpCloud's filter syntax, e.g. \
-        'employeeType:$eq:Contractor'",
+        help="Any number of filters using JumpCloud's filter syntax, e.g. "
+        "'employeeType:$eq:Contractor'",
     ),
     csv_file: str | None = typer.Option(
         None,
@@ -29,26 +29,24 @@ def list_users(
     department: str | None = typer.Option(
         None,
         "--department",
-        help="Filter users by their department attribute, e.g. \
-        'Engineering'",
+        help="Filter users by their department attribute, e.g. 'Engineering'",
     ),
     cost_center: str | None = typer.Option(
         None,
         "--cost-center",
-        help="Filter users by their cost center attribute, e.g. \
-        'Data Engineering'",
+        help="Filter users by their cost center attribute, e.g. "
+        "'Data Engineering'",
     ),
     title: str | None = typer.Option(
         None,
         "--title",
-        help="Filter users by their job title attribute, e.g. \
-        'Data Engineer'",
+        help="Filter users by their job title attribute, e.g. 'Data Engineer'",
     ),
     state: str | None = typer.Option(
         None,
         "--state",
-        help="Filter users by their state in JumpCloud, e.g. \
-        'ACTIVATED', 'SUSPENDED', or 'STAGED'",
+        help="Filter users by their state in JumpCloud, e.g. "
+        "'ACTIVATED', 'SUSPENDED', or 'STAGED'",
     ),
     json: bool = typer.Option(
         False,
@@ -88,8 +86,8 @@ combined into a single list of filters.
 def get_user(
     user_ids: list[str] | None = typer.Argument(
         None,
-        help="A valid UUID for a JumpCloud user, e.g. \
-        '685cb0f6ef36c7bd8ac56c24'",
+        help="A valid UUID for a JumpCloud user, e.g. "
+        "'685cb0f6ef36c7bd8ac56c24'",
     ),
     json: bool = typer.Option(
         False,
@@ -136,8 +134,8 @@ single UUID.
 def bound_systems(
     user_id: str | None = typer.Argument(
         None,
-        help="A valid UUID for a JumpCloud user, e.g. \
-        '685cb0f6ef36c7bd8ac56c24'",
+        help="A valid UUID for a JumpCloud user, e.g. "
+        "'685cb0f6ef36c7bd8ac56c24'",
     ),
     json: bool = typer.Option(
         False,
