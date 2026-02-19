@@ -8,8 +8,10 @@ from cli.input import resolve_argument, resolve_list_argument
 from cli.output import save_to_csv
 from cli.systems import presenter as sys_presenter
 from cli.users import presenter as usr_presenter
+from core.progress import progress_context
 from core.settings import get_settings
 
+SETTINGS = get_settings()
 app = typer.Typer()
 
 
@@ -76,10 +78,11 @@ combined into a single list of filters.
         filters.append(f"jobTitle:$eq:{title}")
     if state:
         filters.append(f"state:$eq:{state}")
-    users = asyncio.run(usr_api.list_users(filters))
+    with progress_context():
+        users = asyncio.run(usr_api.list_users(filters))
     usr_presenter.print_users(users, json)
     if csv_file:
-        save_to_csv(users, csv_file, get_settings().csv_user_fields)
+        save_to_csv(users, csv_file, SETTINGS.csv_user_fields)
 
 
 @app.command(name="get")
@@ -102,7 +105,8 @@ Get a JumpCloud system user by their UUID. Use 'find-user' to get a user's \
 UUID by their email address.
     """
     user_ids = resolve_list_argument(user_ids)
-    users = asyncio.run(usr_api.get_users(user_ids))
+    with progress_context():
+        users = asyncio.run(usr_api.get_users(user_ids))
     usr_presenter.print_users(users, json)
 
 

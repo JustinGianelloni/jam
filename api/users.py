@@ -1,16 +1,16 @@
 import asyncio
 
-from rich.progress import Progress
-
 from core.client import get_client
+from core.progress import add_task, update_task
 from core.settings import get_settings
 from models.user import MFA, User
 
+SETTINGS = get_settings()
+
 
 async def list_users(filters: list[str] | None = None) -> list[User]:
-    settings = get_settings()
     endpoint = "/systemusers"
-    base_params = {"limit": settings.limit, "sort": "_id"}
+    base_params = {"limit": SETTINGS.limit, "sort": "_id"}
     for i, f in enumerate(filters or []):
         base_params[f"filter[{i}]"] = f
     first_params = {**base_params, "skip": 0}
@@ -21,25 +21,22 @@ async def list_users(filters: list[str] | None = None) -> list[User]:
     users = [User(**result) for result in body.get("results")]
     if len(users) == total:
         return users
+    task_id = add_task(
+        "Fetching users from JumpCloud", total=total, completed=SETTINGS.limit
+    )
     async with get_client() as client:
-        with Progress() as progress:
-            work = progress.add_task(
-                "Fetching users from JumpCloud",
-                total=total,
-                completed=settings.limit,
-            )
-            tasks = []
-            skip = settings.limit
-            while skip < total:
-                page_params = {**base_params, "skip": skip}
-                tasks.append(client.get(endpoint, params=page_params))
-                skip += settings.limit
-            for task in asyncio.as_completed(tasks):
-                response = await task
-                response.raise_for_status()
-                results = response.json().get("results")
-                users.extend(User(**result) for result in results)
-                progress.update(work, advance=len(results))
+        tasks = []
+        skip = SETTINGS.limit
+        while skip < total:
+            page_params = {**base_params, "skip": skip}
+            tasks.append(client.get(endpoint, params=page_params))
+            skip += SETTINGS.limit
+        for task in asyncio.as_completed(tasks):
+            response = await task
+            response.raise_for_status()
+            results = response.json().get("results")
+            users.extend(User(**result) for result in results)
+            update_task(task_id, advance=len(results))
     return users
 
 
@@ -51,17 +48,15 @@ async def get_user(user_id: str) -> User:
 
 
 async def get_users(user_ids: list[str]) -> list[User]:
-    with Progress() as progress:
-        work = progress.add_task(
-            f"Fetching {len(user_ids)} users from JumpCloud",
-            total=len(user_ids),
-        )
-        tasks = [get_user(user_id) for user_id in user_ids]
-        users: list[User] = []
-        for task in asyncio.as_completed(tasks):
-            user = await task
-            users.append(user)
-            progress.update(work, advance=1)
+    task_id = add_task(
+        f"Fetching {len(user_ids)} from JumpCloud", total=len(user_ids)
+    )
+    tasks = [get_user(user_id) for user_id in user_ids]
+    users: list[User] = []
+    for task in asyncio.as_completed(tasks):
+        user = await task
+        users.append(user)
+        update_task(task_id, advance=1)
     return users
 
 

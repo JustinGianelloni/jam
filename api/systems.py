@@ -1,17 +1,17 @@
 import asyncio
 
-from rich.progress import Progress
-
 from core.client import get_client
+from core.progress import add_task, update_task
 from core.settings import get_settings
 from models.system import Association, System
 
+SETTINGS = get_settings()
+
 
 async def list_systems(filters: list[str] | None = None) -> list[System]:
-    settings = get_settings()
     endpoint = "/systems"
     base_params = {
-        "limit": settings.limit,
+        "limit": SETTINGS.limit,
         "sort": "_id",
     }
     for i, f in enumerate(filters or []):
@@ -24,25 +24,24 @@ async def list_systems(filters: list[str] | None = None) -> list[System]:
     systems = [System(**result) for result in body.get("results")]
     if len(systems) == total:
         return systems
+    task_id = add_task(
+        "Fetching systems from JumpCloud",
+        total=total,
+        completed=SETTINGS.limit,
+    )
     async with get_client() as client:
-        with Progress() as progress:
-            work = progress.add_task(
-                "Fetching systems from JumpCloud",
-                total=total,
-                completed=settings.limit,
-            )
-            tasks = []
-            skip = settings.limit
-            while skip < total:
-                page_params = {**base_params, "skip": skip}
-                tasks.append(client.get(endpoint, params=page_params))
-                skip += settings.limit
-            for task in asyncio.as_completed(tasks):
-                response = await task
-                response.raise_for_status()
-                results = response.json().get("results")
-                systems.extend([System(**result) for result in results])
-                progress.update(work, advance=len(results))
+        tasks = []
+        skip = SETTINGS.limit
+        while skip < total:
+            page_params = {**base_params, "skip": skip}
+            tasks.append(client.get(endpoint, params=page_params))
+            skip += SETTINGS.limit
+        for task in asyncio.as_completed(tasks):
+            response = await task
+            response.raise_for_status()
+            results = response.json().get("results")
+            systems.extend([System(**result) for result in results])
+            update_task(task_id, advance=len(systems))
     return systems
 
 
@@ -54,17 +53,16 @@ async def get_system(system_id: str) -> System:
 
 
 async def get_systems(system_ids: list[str]) -> list[System]:
-    with Progress() as progress:
-        work = progress.add_task(
-            f"Fetching {len(system_ids)} systems from JumpCloud",
-            total=len(system_ids),
-        )
-        tasks = [get_system(system_id) for system_id in system_ids]
-        systems: list[System] = []
-        for task in asyncio.as_completed(tasks):
-            system = await task
-            systems.append(system)
-            progress.update(work, advance=1)
+    task_id = add_task(
+        f"Fetching {len(system_ids)} systems from JumpCloud",
+        total=len(system_ids),
+    )
+    tasks = [get_system(system_id) for system_id in system_ids]
+    systems: list[System] = []
+    for task in asyncio.as_completed(tasks):
+        system = await task
+        systems.append(system)
+        update_task(task_id, advance=len(system_ids))
     return systems
 
 

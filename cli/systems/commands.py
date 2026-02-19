@@ -8,8 +8,10 @@ from cli.input import resolve_argument, resolve_list_argument
 from cli.output import save_to_csv
 from cli.systems import presenter as sys_presenter
 from cli.users import presenter as usr_presenter
+from core.progress import progress_context
 from core.settings import get_settings
 
+SETTINGS = get_settings()
 app = typer.Typer()
 
 
@@ -61,10 +63,11 @@ combined into a single list of filters.
         filters.append(f"os:$eq:{os}")
     if os_family:
         filters.append(f"osFamily:$eq:{os_family}")
-    systems = asyncio.run(sys_api.list_systems(filters))
+    with progress_context():
+        systems = asyncio.run(sys_api.list_systems(filters))
     sys_presenter.print_systems(systems, json)
     if csv_file:
-        save_to_csv(systems, csv_file, get_settings().csv_system_fields)
+        save_to_csv(systems, csv_file, SETTINGS.csv_system_fields)
 
 
 @app.command(name="get")
@@ -86,7 +89,8 @@ def get_system(
     Get a JumpCloud system by its UUID.
     """
     system_ids = resolve_list_argument(system_ids)
-    systems = asyncio.run(sys_api.get_systems(system_ids))
+    with progress_context():
+        systems = asyncio.run(sys_api.get_systems(system_ids))
     sys_presenter.print_systems(systems, json)
 
 

@@ -9,6 +9,7 @@ from pydantic_settings import (
     BaseSettings,
     JsonConfigSettingsSource,
     PydanticBaseSettingsSource,
+    PyprojectTomlConfigSettingsSource,
     SettingsConfigDict,
 )
 
@@ -40,17 +41,21 @@ class Settings(BaseSettings):
             )
         )
     )
-    JAM_CLIENT_ID: str = Field(init=False)
-    JAM_CLIENT_SECRET: str = Field(init=False)
-    api_url: str = Field(init=False)
-    oauth_url: str = Field(init=False)
-    timeout: int = Field(init=False)
-    limit: int = Field(init=False)
-    local_tz: str = Field(init=False)
-    console_user_fields: dict[str, str] = Field(init=False)
-    csv_user_fields: dict[str, str] = Field(init=False)
-    console_system_fields: dict[str, str] = Field(init=False)
-    csv_system_fields: dict[str, str] = Field(init=False)
+    JAM_CLIENT_ID: str = Field(default="")
+    JAM_CLIENT_SECRET: str = Field(default="")
+    api_url: str = Field(default="https://console.jumpcloud.com/api")
+    oauth_url: str = Field(
+        default="https://admin-oauth.id.jumpcloud.com/oauth2/token"
+    )
+    timeout: int = Field(default=10)
+    limit: int = Field(default=100)
+    local_tz: str = Field(default="US/Eastern")
+    console_user_fields: dict[str, str] = Field(default_factory=dict)
+    csv_user_fields: dict[str, str] = Field(default_factory=dict)
+    console_system_fields: dict[str, str] = Field(default_factory=dict)
+    csv_system_fields: dict[str, str] = Field(default_factory=dict)
+    console_group_fields: dict[str, str] = Field(default_factory=dict)
+    csv_group_fields: dict[str, str] = Field(default_factory=dict)
     model_config = SettingsConfigDict(
         env_file=".env",
         pyproject_toml_table_header=("tool", "jam"),
@@ -71,6 +76,7 @@ class Settings(BaseSettings):
             env_settings,
             dotenv_settings,
             JamConfigSource(settings_cls),
+            PyprojectTomlConfigSettingsSource(settings_cls),
         )
 
     @property
