@@ -1,6 +1,7 @@
 name: Bump Version & Release
 
 on:
+  # Manual trigger
   workflow_dispatch:
     inputs:
       bump_type:
@@ -12,22 +13,48 @@ on:
           - minor
           - major
 
+  # Trigger on PR merge with release labels
+  pull_request:
+    types: [closed]
+    branches: [main]
+
 permissions:
   contents: write
 
 jobs:
   bump-and-release:
     runs-on: ubuntu-latest
+    # Run if manually triggered OR if PR was merged with a release label
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.merged == true &&
+       (contains(github.event.pull_request.labels.*.name, 'release:patch') ||
+        contains(github.event.pull_request.labels.*.name, 'release:minor') ||
+        contains(github.event.pull_request.labels.*.name, 'release:major')))
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: main
 
       - name: Configure Git
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Determine bump type
+        id: bump_type
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "TYPE=${{ inputs.bump_type }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ contains(github.event.pull_request.labels.*.name, 'release:major') }}" == "true" ]]; then
+            echo "TYPE=major" >> $GITHUB_OUTPUT
+          elif [[ "${{ contains(github.event.pull_request.labels.*.name, 'release:minor') }}" == "true" ]]; then
+            echo "TYPE=minor" >> $GITHUB_OUTPUT
+          else
+            echo "TYPE=patch" >> $GITHUB_OUTPUT
+          fi
 
       - name: Bump version
         id: bump
@@ -39,8 +66,8 @@ jobs:
           # Parse version components
           IFS='.' read -r major minor patch <<< "$current"
           
-          # Bump based on input
-          case "${{ inputs.bump_type }}" in
+          # Bump based on determined type
+          case "${{ steps.bump_type.outputs.TYPE }}" in
             major)
               new="$((major+1)).0.0"
               ;;
@@ -73,13 +100,8 @@ jobs:
         run: |
           echo "## 🚀 Release v${{ steps.bump.outputs.NEW_VERSION }} triggered!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Bump type:** ${{ steps.bump_type.outputs.TYPE }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "The release workflow will now create the GitHub release automatically." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "View releases: https://github.com/${{ github.repository }}/releases" >> $GITHUB_STEP_SUMMARY
-
-          branch: "release/v${{ steps.bump.outputs.NEW_VERSION }}"
-          base: main
-          labels: |
-            release
-            automated
-
