@@ -84,7 +84,7 @@ choose_field() {
 }
 
 get_op_creds() {
-  read -r -e -p "What is the name of the saved credential in 1Password (e.g. JC_OAUTH)? " op_title
+  read -r -e -p "What is the name of the saved credential in 1Password (e.g. JC_OAUTH)? " op_title </dev/tty
   op_json=$(op item get "$op_title" --format json)
   if [[ -z "$op_json" ]]; then
     echo "No credential found by that name. Please validate your credential name and run the script again."
@@ -112,13 +112,13 @@ echo "  Install directory: $INSTALL_DIR"
 echo "  Config directory:  $CONFIG_PATH"
 echo ""
 
-read -r -e -p "Do you wish to continue? (y/N): " confirm
+read -r -e -p "Do you wish to continue? (y/N): " confirm </dev/tty
 if [[ "$confirm" != [yY] && "$confirm" != [yY][eE][sS] ]]; then
   echo "Installation aborted."
   exit 1
 fi
 
-read -r -e -p "Do you wish to retrieve credentials from 1Password? (y/N): " op_confirm
+read -r -e -p "Do you wish to retrieve credentials from 1Password? (y/N): " op_confirm </dev/tty
 if [[ "$op_confirm" == [yY] || "$op_confirm" == [yY][eE][sS] ]]; then
   use_op=1
   tools+=("op")
