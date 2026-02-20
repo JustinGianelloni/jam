@@ -2,16 +2,53 @@
 set -euo pipefail
 
 # Configuration
-REPO_URL="https://github.com/JustinGianelloni/jam.git"
+REPO="JustinGianelloni/jam"
 INSTALL_DIR="${JAM_INSTALL_DIR:-$HOME/.local/share/jam}"
 CONFIG_PATH="${JAM_CONFIG_PATH:-$HOME/.config/jam}"
 CONFIG_FILE="$CONFIG_PATH/config.json"
-CONFIG_URL="https://raw.githubusercontent.com/JustinGianelloni/jam/main/default_config.json"
+CONFIG_URL="https://raw.githubusercontent.com/${REPO}/main/default_config.json"
 
 use_op=0
 shell_rc="${ZDOTDIR:-$HOME}/.zshrc"
 [[ "$SHELL" == */bash ]] && shell_rc="$HOME/.bashrc"
-tools=("jq" "uv" "fzf" "curl" "git")
+tools=("jq" "uv" "fzf" "curl" "tar")
+
+get_latest_version() {
+  curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | jq -r '.tag_name'
+}
+
+get_current_version() {
+  local pyproject_file="$INSTALL_DIR/pyproject.toml"
+  if [[ -f "$pyproject_file" ]]; then
+    grep -oP '^version = "\K[^"]+' "$pyproject_file" | head -1
+  else
+    echo ""
+  fi
+}
+
+download_release() {
+  local version=$1
+  local tarball_url="https://github.com/${REPO}/archive/refs/tags/${version}.tar.gz"
+  local temp_dir
+  temp_dir=$(mktemp -d)
+
+  echo "Downloading JAM ${version}..."
+  curl -fsSL "$tarball_url" -o "$temp_dir/jam.tar.gz"
+
+  echo "Extracting..."
+  tar -xzf "$temp_dir/jam.tar.gz" -C "$temp_dir"
+
+  # Remove old installation (preserve nothing from install dir)
+  rm -rf "$INSTALL_DIR"
+  mkdir -p "$INSTALL_DIR"
+
+  # Move extracted contents (archive extracts to jam-<version> folder)
+  mv "$temp_dir"/jam-*/* "$INSTALL_DIR/"
+
+
+  # Cleanup
+  rm -rf "$temp_dir"
+}
 
 install_pkg() {
   local pkg=$1
@@ -105,14 +142,25 @@ fi
 # Install uv using official installer
 install_uv
 
-# Clone or update the repository
-if [[ -d "$INSTALL_DIR/.git" ]]; then
-  echo "Updating existing installation..."
-  git -C "$INSTALL_DIR" pull --quiet
+# Get latest version and check if update needed
+latest_version=$(get_latest_version)
+current_version=$(get_current_version)
+
+if [[ -z "$latest_version" ]]; then
+  echo "Error: Could not fetch latest release. Check your internet connection."
+  exit 1
+fi
+
+# Strip 'v' prefix from latest_version for comparison with pyproject.toml version
+latest_version_num="${latest_version#v}"
+
+if [[ "$current_version" == "$latest_version_num" ]]; then
+  echo "JAM ${latest_version} is already installed."
 else
-  echo "Cloning JAM repository..."
-  mkdir -p "$(dirname "$INSTALL_DIR")"
-  git clone --quiet "$REPO_URL" "$INSTALL_DIR"
+  if [[ -n "$current_version" ]]; then
+    echo "Updating from v${current_version} to ${latest_version}..."
+  fi
+  download_release "$latest_version"
 fi
 
 # Create config directory and download default config
@@ -144,4 +192,5 @@ fi
 
 echo ""
 echo "=== Installation Complete ==="
+echo "Installed JAM ${latest_version}"
 echo "Run 'source $shell_rc' or restart your terminal to start using the 'jam' command."

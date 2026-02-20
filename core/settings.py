@@ -7,6 +7,7 @@ from pydantic import Field
 from pydantic.fields import FieldInfo
 from pydantic_settings import (
     BaseSettings,
+    DotEnvSettingsSource,
     JsonConfigSettingsSource,
     PydanticBaseSettingsSource,
     PyprojectTomlConfigSettingsSource,
@@ -57,7 +58,7 @@ class Settings(BaseSettings):
     console_group_fields: dict[str, str] = Field(default_factory=dict)
     csv_group_fields: dict[str, str] = Field(default_factory=dict)
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=JAM_CONFIG_PATH / ".env",
         pyproject_toml_table_header=("tool", "jam"),
         extra="ignore",
     )
@@ -68,13 +69,22 @@ class Settings(BaseSettings):
         settings_cls: type[BaseSettings],
         init_settings: PydanticBaseSettingsSource,
         env_settings: PydanticBaseSettingsSource,
-        dotenv_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,  # noqa: ARG003
         file_secret_settings: PydanticBaseSettingsSource,  # noqa: ARG003
     ) -> tuple[PydanticBaseSettingsSource, ...]:
+        config_path = Path(
+            os.environ.get(
+                "JAM_CONFIG_PATH", str(Path.home() / ".config" / "jam")
+            )
+        )
+        custom_dotenv = DotEnvSettingsSource(
+            settings_cls,
+            env_file=config_path / ".env",
+        )
         return (
             init_settings,
             env_settings,
-            dotenv_settings,
+            custom_dotenv,
             JamConfigSource(settings_cls),
             PyprojectTomlConfigSettingsSource(settings_cls),
         )
