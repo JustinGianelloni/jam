@@ -7,8 +7,10 @@ from pydantic import Field
 from pydantic.fields import FieldInfo
 from pydantic_settings import (
     BaseSettings,
+    DotEnvSettingsSource,
     JsonConfigSettingsSource,
     PydanticBaseSettingsSource,
+    PyprojectTomlConfigSettingsSource,
     SettingsConfigDict,
 )
 
@@ -40,19 +42,23 @@ class Settings(BaseSettings):
             )
         )
     )
-    JAM_CLIENT_ID: str = Field(init=False)
-    JAM_CLIENT_SECRET: str = Field(init=False)
-    api_url: str = Field(init=False)
-    oauth_url: str = Field(init=False)
-    timeout: int = Field(init=False)
-    limit: int = Field(init=False)
-    local_tz: str = Field(init=False)
-    console_user_fields: dict[str, str] = Field(init=False)
-    csv_user_fields: dict[str, str] = Field(init=False)
-    console_system_fields: dict[str, str] = Field(init=False)
-    csv_system_fields: dict[str, str] = Field(init=False)
+    JAM_CLIENT_ID: str = Field(default="")
+    JAM_CLIENT_SECRET: str = Field(default="")
+    api_url: str = Field(default="https://console.jumpcloud.com/api")
+    oauth_url: str = Field(
+        default="https://admin-oauth.id.jumpcloud.com/oauth2/token"
+    )
+    timeout: int = Field(default=10)
+    limit: int = Field(default=100)
+    local_tz: str = Field(default="US/Eastern")
+    console_user_fields: dict[str, str] = Field(default_factory=dict)
+    csv_user_fields: dict[str, str] = Field(default_factory=dict)
+    console_system_fields: dict[str, str] = Field(default_factory=dict)
+    csv_system_fields: dict[str, str] = Field(default_factory=dict)
+    console_group_fields: dict[str, str] = Field(default_factory=dict)
+    csv_group_fields: dict[str, str] = Field(default_factory=dict)
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=JAM_CONFIG_PATH / ".env",
         pyproject_toml_table_header=("tool", "jam"),
         extra="ignore",
     )
@@ -63,14 +69,24 @@ class Settings(BaseSettings):
         settings_cls: type[BaseSettings],
         init_settings: PydanticBaseSettingsSource,
         env_settings: PydanticBaseSettingsSource,
-        dotenv_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,  # noqa: ARG003
         file_secret_settings: PydanticBaseSettingsSource,  # noqa: ARG003
     ) -> tuple[PydanticBaseSettingsSource, ...]:
+        config_path = Path(
+            os.environ.get(
+                "JAM_CONFIG_PATH", str(Path.home() / ".config" / "jam")
+            )
+        )
+        custom_dotenv = DotEnvSettingsSource(
+            settings_cls,
+            env_file=config_path / ".env",
+        )
         return (
             init_settings,
             env_settings,
-            dotenv_settings,
+            custom_dotenv,
             JamConfigSource(settings_cls),
+            PyprojectTomlConfigSettingsSource(settings_cls),
         )
 
     @property

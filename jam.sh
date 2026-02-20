@@ -81,8 +81,27 @@ do_update() {
 
   if version_lt "$local_version" "$remote_version"; then
     echo "Updating JAM: v$local_version → v$remote_version"
-    git fetch origin --quiet
-    git pull --quiet origin main
+
+    local tarball_url="https://github.com/JustinGianelloni/jam/archive/refs/tags/v${remote_version}.tar.gz"
+    local temp_dir
+    temp_dir=$(mktemp -d)
+
+    echo "Downloading JAM v${remote_version}..."
+    if ! curl -fsSL "$tarball_url" -o "$temp_dir/jam.tar.gz"; then
+      echo "Error: Failed to download release."
+      rm -rf "$temp_dir"
+      exit 1
+    fi
+
+    echo "Extracting..."
+    tar -xzf "$temp_dir/jam.tar.gz" -C "$temp_dir"
+
+    # Remove old files (except config) and move new files
+    find "$SCRIPT_DIR" -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+    mv "$temp_dir"/jam-*/* "$SCRIPT_DIR/"
+
+    # Cleanup
+    rm -rf "$temp_dir"
 
     # Clear update cache
     rm -f "$config_path/.update_check"

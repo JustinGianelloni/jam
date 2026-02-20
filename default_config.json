@@ -35,7 +35,16 @@
       "Last Contact": "last_contact",
       "OS": "os",
       "Serial": "serial_number"
+    },
+    "console_group_fields": {
+      "ID": "id",
+      "Name": "name",
+      "Description": "description"
+    },
+    "csv_group_fields": {
+      "ID": "id",
+      "Name": "name",
+      "Description": "description"
     }
   }
 }
-
