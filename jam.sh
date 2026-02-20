@@ -22,13 +22,19 @@ get_remote_version() {
 # Compare semantic versions: returns 0 if $1 < $2
 version_lt() {
   [ "$1" = "$2" ] && return 1
-  local IFS=.
-  local i v1=($1) v2=($2)
-  for ((i=0; i<${#v1[@]} || i<${#v2[@]}; i++)); do
-    local n1=${v1[i]:-0}
-    local n2=${v2[i]:-0}
-    ((n1 < n2)) && return 0
-    ((n1 > n2)) && return 1
+  local v1="$1" v2="$2"
+  local n1 n2
+  while [ -n "$v1" ] || [ -n "$v2" ]; do
+    n1="${v1%%.*}"
+    n2="${v2%%.*}"
+    [ -z "$n1" ] && n1=0
+    [ -z "$n2" ] && n2=0
+    [ "$n1" -lt "$n2" ] && return 0
+    [ "$n1" -gt "$n2" ] && return 1
+    v1="${v1#*.}" && [ "$v1" = "$1" ] && v1=""
+    v2="${v2#*.}" && [ "$v2" = "$2" ] && v2=""
+    [ "$v1" = "${n1}" ] && v1=""
+    [ "$v2" = "${n2}" ] && v2=""
   done
   return 1
 }
