@@ -1,4 +1,4 @@
-name: Bump Version
+name: Bump Version & Release
 
 on:
   workflow_dispatch:
@@ -14,10 +14,9 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
-  bump:
+  bump-and-release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -58,26 +57,26 @@ jobs:
           
           # Update pyproject.toml
           sed -i "s/^version = \".*\"/version = \"$new\"/" pyproject.toml
-          
-          echo "Updated pyproject.toml:"
-          grep '^version' pyproject.toml
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: bump version to ${{ steps.bump.outputs.NEW_VERSION }}"
-          title: "chore: bump version to ${{ steps.bump.outputs.NEW_VERSION }}"
-          body: |
-            ## Version Bump
-            
-            This PR bumps the version from the current release to **v${{ steps.bump.outputs.NEW_VERSION }}**.
-            
-            **Bump type:** `${{ inputs.bump_type }}`
-            
-            ### After merging:
-            1. Create and push a tag: `git tag v${{ steps.bump.outputs.NEW_VERSION }} && git push origin v${{ steps.bump.outputs.NEW_VERSION }}`
-            2. The release workflow will automatically create a GitHub release
+      - name: Commit version bump
+        run: |
+          git add pyproject.toml
+          git commit -m "chore: bump version to ${{ steps.bump.outputs.NEW_VERSION }}"
+          git push origin main
+
+      - name: Create and push tag
+        run: |
+          git tag -a "v${{ steps.bump.outputs.NEW_VERSION }}" -m "Release v${{ steps.bump.outputs.NEW_VERSION }}"
+          git push origin "v${{ steps.bump.outputs.NEW_VERSION }}"
+
+      - name: Summary
+        run: |
+          echo "## 🚀 Release v${{ steps.bump.outputs.NEW_VERSION }} triggered!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The release workflow will now create the GitHub release automatically." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View releases: https://github.com/${{ github.repository }}/releases" >> $GITHUB_STEP_SUMMARY
+
           branch: "release/v${{ steps.bump.outputs.NEW_VERSION }}"
           base: main
           labels: |
