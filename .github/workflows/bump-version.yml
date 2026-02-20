@@ -1,0 +1,86 @@
+name: Bump Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version
+        id: bump
+        run: |
+          # Get current version from pyproject.toml
+          current=$(grep -oP '^version = "\K[^"]+' pyproject.toml)
+          echo "Current version: $current"
+          
+          # Parse version components
+          IFS='.' read -r major minor patch <<< "$current"
+          
+          # Bump based on input
+          case "${{ inputs.bump_type }}" in
+            major)
+              new="$((major+1)).0.0"
+              ;;
+            minor)
+              new="${major}.$((minor+1)).0"
+              ;;
+            patch)
+              new="${major}.${minor}.$((patch+1))"
+              ;;
+          esac
+          
+          echo "New version: $new"
+          echo "NEW_VERSION=$new" >> $GITHUB_OUTPUT
+          
+          # Update pyproject.toml
+          sed -i "s/^version = \".*\"/version = \"$new\"/" pyproject.toml
+          
+          echo "Updated pyproject.toml:"
+          grep '^version' pyproject.toml
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: bump version to ${{ steps.bump.outputs.NEW_VERSION }}"
+          title: "chore: bump version to ${{ steps.bump.outputs.NEW_VERSION }}"
+          body: |
+            ## Version Bump
+            
+            This PR bumps the version from the current release to **v${{ steps.bump.outputs.NEW_VERSION }}**.
+            
+            **Bump type:** `${{ inputs.bump_type }}`
+            
+            ### After merging:
+            1. Create and push a tag: `git tag v${{ steps.bump.outputs.NEW_VERSION }} && git push origin v${{ steps.bump.outputs.NEW_VERSION }}`
+            2. The release workflow will automatically create a GitHub release
+          branch: "release/v${{ steps.bump.outputs.NEW_VERSION }}"
+          base: main
+          labels: |
+            release
+            automated
+
