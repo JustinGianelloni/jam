@@ -58,7 +58,12 @@ class Settings(BaseSettings):
     console_group_fields: dict[str, str] = Field(default_factory=dict)
     csv_group_fields: dict[str, str] = Field(default_factory=dict)
     model_config = SettingsConfigDict(
-        env_file=JAM_CONFIG_PATH / ".env",
+        env_file=Path(
+            os.environ.get(
+                "JAM_CONFIG_PATH", str(Path.home() / ".config" / "jam")
+            )
+        )
+        / ".env",
         pyproject_toml_table_header=("tool", "jam"),
         extra="ignore",
     )
