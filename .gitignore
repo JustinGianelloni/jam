@@ -11,3 +11,4 @@ wheels/
 *.log
 *.env
 uv.lock
+.github/
