@@ -18,8 +18,7 @@ A command-line interface for managing JumpCloud users and systems.
 
 ## Prerequisites
 
-- macOS
-- [Homebrew](https://brew.sh/)
+- macOS or Linux
 - Git
 - Python 3.13+
 - JumpCloud Admin OAuth credentials (Client ID and Client Secret)
@@ -27,32 +26,42 @@ A command-line interface for managing JumpCloud users and systems.
 
 ## Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-org/jam.git
-   cd jam
-   ```
+Run the installer directly:
+```bash
+curl -fsSL https://raw.githubusercontent.com/JustinGianelloni/jam/main/install.sh | bash
+```
 
-2. Run the installation script:
-   ```bash
-   ./install.sh
-   ```
+The script will:
+- Install required dependencies (`jq`, `uv`, `fzf`) using your system's package manager
+- Clone the repository to `~/.local/share/jam`
+- Download the default configuration to `~/.config/jam/config.json`
+- Optionally configure 1Password credential references
+- Add a `jam` alias to your shell configuration
 
-   The script will:
-   - Install required dependencies (`jq`, `yq`, `uv`, `fzf`) via Homebrew
-   - Optionally configure 1Password credential references
-   - Add a `jam` alias to your `.zshrc`
+After installation, reload your shell or run:
+```bash
+source ~/.zshrc  # or ~/.bashrc for Bash users
+```
 
-3. Reload your shell or run:
-   ```bash
-   source ~/.zshrc
-   ```
+If not using 1Password, manually configure your credentials in a `.env` file in the project root:
+```bash
+JAM_CLIENT_ID=your-client-id
+JAM_CLIENT_SECRET=your-client-secret
+```
 
-4. If not using 1Password, manually configure your credentials in a `.env` file in the project root:
-   ```bash
-   JAM_CLIENT_ID=your-client-id
-   JAM_CLIENT_SECRET=your-client-secret
-   ```
+## Updating
+
+JAM automatically checks for updates once per day. When an update is available, you'll see a notification:
+
+```
+📦 Update available: v0.2.0 (current: v0.1.3)
+   Run 'jam update' to install the latest version.
+```
+
+To update manually:
+```bash
+jam update
+```
 
 ## Commands
 
@@ -366,7 +375,7 @@ jam users list --department Engineering | jam users get --json
 
 ## Configuration
 
-Configuration is stored in `pyproject.toml` under `[tool.jam]`:
+Configuration is stored in `~/.config/jam/config.json`:
 
 | Setting | Description | Default |
 |---------|-------------|---------|
@@ -378,19 +387,24 @@ Configuration is stored in `pyproject.toml` under `[tool.jam]`:
 
 ### Customizing Output Fields
 
-You can customize which fields are displayed in console output and CSV exports by modifying the field mappings in `pyproject.toml`:
+You can customize which fields are displayed in console output and CSV exports by modifying the field mappings in `config.json`:
 
-```toml
-[tool.jam.console_user_fields]
-"ID" = "id"
-"State" = "pretty_state"
-"Email" = "email"
-"Employee Type" = "employee_type"
-
-[tool.jam.csv_user_fields]
-"ID" = "id"
-"State" = "state"
-"Email" = "email"
+```json
+{
+  "jam": {
+    "console_user_fields": {
+      "ID": "id",
+      "State": "pretty_state",
+      "Email": "email",
+      "Employee Type": "employee_type"
+    },
+    "csv_user_fields": {
+      "ID": "id",
+      "State": "state",
+      "Email": "email"
+    }
+  }
+}
 ```
 
 ## License

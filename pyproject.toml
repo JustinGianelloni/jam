@@ -1,57 +1,54 @@
-[tool.auth]
-
 [project]
 name = "jam"
-version = "0.1.3"
+version = "0.2.0"
 description = "A command line interface for JumpCloud."
 readme = "README.md"
 requires-python = ">=3.13"
+authors = [
+    {name = "Justin Gianelloni", email = "justin.gianelloni@gmail.com"}
+]
+license = {text = "MIT"}
+keywords = ["jumpcloud", "cli"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: System Administrators",
+    "Topic :: System :: System Administration",
+    "Programming Language :: Python :: 3.13",
+]
 dependencies = [
     "httpx>=0.28.1",
     "pydantic>=2.12.5",
     "pydantic-settings>=2.12.0",
+    "python-semantic-release>=10.4.1",
     "pytz>=2025.2",
     "rich>=14.3.2",
+    "tomlkit>=0.14.0",
     "typer>=0.21.1",
 ]
+
+[project.urls]
+Homepage = "https://github.com/JustinGianelloni/jam"
+Repository = "https://github.com/JustinGianelloni/jam"
+Issues = "https://github.com/JustinGianelloni/jam/issues"
 
 [tool.ruff]
 line-length = 79
 
-[tool.jam]
-api_url = "https://console.jumpcloud.com/api"
-oauth_url = "https://admin-oauth.id.jumpcloud.com/oauth2/token"
-timeout = 10
-limit = 100
-local_tz = "US/Eastern"
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "B008",
+    "COM812",
+    "D",
+    "FBT001",
+    "FBT003",
+    "PLR0913",
+    "S603",
+    "S607",
+]
 
-[tool.jam.console_user_fields]
-"ID" = "id"
-"State" = "pretty_state"
-"Email" = "email"
-"Employee Type" = "employee_type"
-"Job Title" = "job_title"
-"Department" = "department"
-
-[tool.jam.csv_user_fields]
-"ID" = "id"
-"State" = "state"
-"Email" = "email"
-"Employee Type" = "employee_type"
-"Job Title" = "job_title"
-"Department" = "department"
-"Cost Center" = "cost_center"
-
-[tool.jam.console_system_fields]
-"ID" = "id"
-"Hostname" = "hostname"
-"Last Contact (Local)" = "pretty_last_contact"
-"OS" = "pretty_os"
-"Serial" = "serial_number"
-
-[tool.jam.csv_system_fields]
-"ID" = "id"
-"Hostname" = "hostname"
-"Last Contact" = "last_contact"
-"OS" = "os"
-"Serial" = "serial_number"
+[dependency-groups]
+dev = [
+    "ruff>=0.15.1",
+]

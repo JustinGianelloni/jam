@@ -1,8 +1,9 @@
 import json
 import sys
+from collections.abc import Sequence
 from csv import DictWriter
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from pydantic import BaseModel
 from rich.console import Console
@@ -28,7 +29,7 @@ def print_table(table: Table) -> None:
 
 
 def print_values(values: list[Any]) -> None:
-    print("\n".join(values))
+    print("\n".join(values))  # noqa: T201
 
 
 def print_json(models: Sequence[BaseModel]) -> None:
@@ -36,7 +37,8 @@ def print_json(models: Sequence[BaseModel]) -> None:
         output = "No results match your query."
     elif len(models) == 1:
         output = json.dumps(
-            models[0].model_dump(mode="json", exclude_none=True), indent=2
+            models[0].model_dump(mode="json", exclude_none=True),
+            indent=2,
         )
     else:
         output = [
@@ -44,7 +46,7 @@ def print_json(models: Sequence[BaseModel]) -> None:
             for m in models
         ]
     if is_piped():
-        print(output)
+        print(output)  # noqa: T201
     else:
         CONSOLE.print(output)
 
@@ -57,11 +59,11 @@ def save_to_csv(
     OUTPUT_DIR.mkdir(exist_ok=True)
     file_path = OUTPUT_DIR / filename
     fieldnames = list(field_mapping.values())
-    with open(file_path, "w") as file:
+    with Path.open(file_path, "w") as file:
         writer = DictWriter(file, fieldnames=fieldnames)
         # Write header row with display names
         writer.writerow({v: k for k, v in field_mapping.items()})
         writer.writerows(
-            [item.model_dump(include=set(fieldnames)) for item in items]
+            [item.model_dump(include=set(fieldnames)) for item in items],
         )
     CONSOLE.print(f"Exported {len(items)} items to '{file_path}'.")

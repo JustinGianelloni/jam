@@ -23,7 +23,8 @@ def resolve_argument(value: str | None, param_name: str) -> str:
         stdin_value = sys.stdin.read().strip()
         if stdin_value:
             return stdin_value
-    raise typer.BadParameter(f"{param_name} not provided")
+    error = f"{param_name} not provided."
+    raise typer.BadParameter(error)
 
 
 def resolve_optional_argument(value: str | None) -> str | None:
