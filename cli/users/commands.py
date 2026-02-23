@@ -85,7 +85,7 @@ combined into a single list of filters.
     if state:
         filters.append(f"state:$eq:{state}")
     if employee_type:
-        filters.append(f"type:$eq:{employee_type}")
+        filters.append(f"employeeType:$eq:{employee_type}")
     with progress_context():
         users = asyncio.run(usr_api.list_users(filters))
     usr_presenter.print_users(users, json)
