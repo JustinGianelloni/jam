@@ -17,46 +17,53 @@ app = typer.Typer()
 
 @app.command(name="list")
 def list_users(
-    filters: list[str] | None = typer.Option(
-        None,
-        "--filter",
-        help="Any number of filters using JumpCloud's filter syntax, e.g. "
-        "'employeeType:$eq:Contractor'",
-    ),
-    csv_file: str | None = typer.Option(
-        None,
-        "--csv",
-        help="Export result to specified CSV file",
-    ),
-    department: str | None = typer.Option(
-        None,
-        "--department",
-        help="Filter users by their department attribute, e.g. 'Engineering'",
-    ),
-    cost_center: str | None = typer.Option(
-        None,
-        "--cost-center",
-        help="Filter users by their cost center attribute, e.g. "
-        "'Data Engineering'",
-    ),
-    title: str | None = typer.Option(
-        None,
-        "--title",
-        help="Filter users by their job title attribute, e.g. 'Data Engineer'",
-    ),
-    state: str | None = typer.Option(
-        None,
-        "--state",
-        help="Filter users by their state in JumpCloud, e.g. "
-        "'ACTIVATED', 'SUSPENDED', or 'STAGED'",
-    ),
-    json: bool = typer.Option(
-        False,
-        "-j",
-        "--json",
-        is_flag=True,
-        help="Return a full JSON model of the user(s).",
-    ),
+        filters: list[str] | None = typer.Option(
+            None,
+            "--filter",
+            help="Any number of filters using JumpCloud's filter syntax, e.g. "
+                 "'employeeType:$eq:Contractor'",
+        ),
+        csv_file: str | None = typer.Option(
+            None,
+            "--csv",
+            help="Export result to specified CSV file",
+        ),
+        department: str | None = typer.Option(
+            None,
+            "--department",
+            help="Filter users by their department attribute, e.g. 'Engineering'",
+        ),
+        cost_center: str | None = typer.Option(
+            None,
+            "--cost-center",
+            help="Filter users by their cost center attribute, e.g. "
+                 "'Data Engineering'",
+        ),
+        title: str | None = typer.Option(
+            None,
+            "--title",
+            help="Filter users by their job title attribute, e.g. 'Data Engineer'",
+        ),
+        state: str | None = typer.Option(
+            None,
+            "--state",
+            help="Filter users by their state in JumpCloud, e.g. "
+                 "'ACTIVATED', 'SUSPENDED', or 'STAGED'",
+
+        ),
+        employee_type: str | None = typer.Option(
+            None,
+            "--type",
+            help="Filter users by their type in JumpCloud, e.g. "
+                 "'Full Time', 'Contractor', or 'Service'",
+        ),
+        json: bool = typer.Option(
+            False,
+            "-j",
+            "--json",
+            is_flag=True,
+            help="Return a full JSON model of the user(s).",
+        ),
 ) -> None:
     """
 List all system users in JumpCloud.
@@ -78,6 +85,8 @@ combined into a single list of filters.
         filters.append(f"jobTitle:$eq:{title}")
     if state:
         filters.append(f"state:$eq:{state}")
+    if employee_type:
+        filters.append(f"type:$eq:{employee_type}")
     with progress_context():
         users = asyncio.run(usr_api.list_users(filters))
     usr_presenter.print_users(users, json)
@@ -87,18 +96,18 @@ combined into a single list of filters.
 
 @app.command(name="get")
 def get_user(
-    user_ids: list[str] | None = typer.Argument(
-        None,
-        help="A valid UUID for a JumpCloud user, e.g. "
-        "'685cb0f6ef36c7bd8ac56c24'",
-    ),
-    json: bool = typer.Option(
-        False,
-        "-j",
-        "--json",
-        is_flag=True,
-        help="Return a full JSON model of the user.",
-    ),
+        user_ids: list[str] | None = typer.Argument(
+            None,
+            help="A valid UUID for a JumpCloud user, e.g. "
+                 "'685cb0f6ef36c7bd8ac56c24'",
+        ),
+        json: bool = typer.Option(
+            False,
+            "-j",
+            "--json",
+            is_flag=True,
+            help="Return a full JSON model of the user.",
+        ),
 ) -> None:
     """
 Get a JumpCloud system user by their UUID. Use 'find-user' to get a user's \
@@ -112,17 +121,17 @@ UUID by their email address.
 
 @app.command(name="find")
 def find_user(
-    email: str | None = typer.Argument(
-        None,
-        help="A valid email address for a JumpCloud user.",
-    ),
-    json: bool = typer.Option(
-        False,
-        "-j",
-        "--json",
-        is_flag=True,
-        help="Return a full JSON model of the user(s).",
-    ),
+        email: str | None = typer.Argument(
+            None,
+            help="A valid email address for a JumpCloud user.",
+        ),
+        json: bool = typer.Option(
+            False,
+            "-j",
+            "--json",
+            is_flag=True,
+            help="Return a full JSON model of the user(s).",
+        ),
 ) -> None:
     """
 Find a JumpCloud user's UUID by their email address. If the query returns \
@@ -136,18 +145,18 @@ single UUID.
 
 @app.command(name="bound-systems")
 def bound_systems(
-    user_id: str | None = typer.Argument(
-        None,
-        help="A valid UUID for a JumpCloud user, e.g. "
-        "'685cb0f6ef36c7bd8ac56c24'",
-    ),
-    json: bool = typer.Option(
-        False,
-        "-j",
-        "--json",
-        is_flag=True,
-        help="Return a full JSON model of the system(s).",
-    ),
+        user_id: str | None = typer.Argument(
+            None,
+            help="A valid UUID for a JumpCloud user, e.g. "
+                 "'685cb0f6ef36c7bd8ac56c24'",
+        ),
+        json: bool = typer.Option(
+            False,
+            "-j",
+            "--json",
+            is_flag=True,
+            help="Return a full JSON model of the system(s).",
+        ),
 ) -> None:
     """
 Find all systems bound to a JumpCloud user by the user's UUID. If the query \
