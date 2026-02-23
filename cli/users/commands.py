@@ -49,7 +49,6 @@ def list_users(
             "--state",
             help="Filter users by their state in JumpCloud, e.g. "
                  "'ACTIVATED', 'SUSPENDED', or 'STAGED'",
-
         ),
         employee_type: str | None = typer.Option(
             None,
