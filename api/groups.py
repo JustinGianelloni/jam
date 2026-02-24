@@ -71,3 +71,25 @@ async def get_group_members(group_id: str) -> list[str]:
             users.extend(result["to"]["id"] for result in body)
             update_task(task_id, advance=len(body))
     return users
+
+
+async def add_group_member(group_id: str, user_id: str) -> None:
+    endpoint = f"/v2/usergroups/{group_id}/members"
+    data = {
+        "op": "add",
+        "type": "user",
+        "id": user_id,
+    }
+    response = await get_client().post(endpoint, json=data)
+    response.raise_for_status()
+
+
+async def remove_group_member(group_id: str, user_id: str) -> None:
+    endpoint = f"/v2/usergroups/{group_id}/members"
+    data = {
+        "op": "remove",
+        "type": "user",
+        "id": user_id,
+    }
+    response = await get_client().post(endpoint, json=data)
+    response.raise_for_status()

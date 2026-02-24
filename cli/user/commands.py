@@ -6,8 +6,8 @@ from api import systems as sys_api
 from api import users as usr_api
 from cli.input import resolve_argument, resolve_list_argument
 from cli.output import save_to_csv
-from cli.systems import presenter as sys_presenter
-from cli.users import presenter as usr_presenter
+from cli.system import presenter as sys_presenter
+from cli.user import presenter as usr_presenter
 from core.progress import progress_context
 from core.settings import get_settings
 
@@ -31,7 +31,8 @@ def list_users(
         department: str | None = typer.Option(
             None,
             "--department",
-            help="Filter users by their department attribute, e.g. 'Engineering'",
+            help="Filter users by their department attribute, e.g. "
+            "'Engineering'",
         ),
         cost_center: str | None = typer.Option(
             None,
@@ -42,7 +43,8 @@ def list_users(
         title: str | None = typer.Option(
             None,
             "--title",
-            help="Filter users by their job title attribute, e.g. 'Data Engineer'",
+            help="Filter users by their job title attribute, e.g. "
+            "'Data Engineer'",
         ),
         state: str | None = typer.Option(
             None,
