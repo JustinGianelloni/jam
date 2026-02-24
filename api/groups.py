@@ -41,6 +41,13 @@ async def list_groups(filters: list[str]) -> list[Group]:
     return groups
 
 
+async def get_group(group_id: str) -> Group:
+    endpoint = f"/v2/usergroups/{group_id}"
+    response = await get_client().get(endpoint)
+    response.raise_for_status()
+    return Group(**response.json())
+
+
 async def get_group_members(group_id: str) -> list[str]:
     endpoint = f"/v2/usergroups/{group_id}/members"
     base_params = {"limit": SETTINGS.limit}

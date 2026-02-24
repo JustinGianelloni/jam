@@ -13,6 +13,7 @@ app = typer.Typer()
 
 app.add_typer(member_app, name="member")
 
+
 @app.command(name="list")
 def list_user_groups(
     filters: list[str] | None = typer.Option(
