@@ -20,7 +20,7 @@ get_latest_version() {
 get_current_version() {
   local pyproject_file="$INSTALL_DIR/pyproject.toml"
   if [[ -f "$pyproject_file" ]]; then
-    grep -oP '^version = "\K[^"]+' "$pyproject_file" | head -1
+    sed -n 's/^version = "\([^"]*\)"/\1/p' "$pyproject_file" | head -1
   else
     echo ""
   fi
