@@ -1,4 +1,6 @@
+import csv
 import sys
+from pathlib import Path
 
 import typer
 
@@ -65,3 +67,9 @@ def resolve_list_argument(values: list[str] | None) -> list[str]:
         if stdin_value:
             return stdin_value.split("\n")
     return []
+
+
+def read_csv_list(path: Path) -> list[str]:
+    with path.open("r") as file:
+        reader = csv.reader(file)
+        return [row[0] for row in reader if row]

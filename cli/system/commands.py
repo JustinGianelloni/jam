@@ -6,8 +6,8 @@ from api import systems as sys_api
 from api import users as usr_api
 from cli.input import resolve_argument, resolve_list_argument
 from cli.output import save_to_csv
-from cli.systems import presenter as sys_presenter
-from cli.users import presenter as usr_presenter
+from cli.system import presenter as sys_presenter
+from cli.user import presenter as usr_presenter
 from core.progress import progress_context
 from core.settings import get_settings
 

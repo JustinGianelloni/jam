@@ -9,6 +9,8 @@ from pydantic import BaseModel
 from rich.console import Console
 from rich.table import Table
 
+from core.progress import get_console
+
 CONSOLE = Console()
 OUTPUT_DIR = Path(__file__).parent.parent / "output"
 
@@ -67,3 +69,14 @@ def save_to_csv(
             [item.model_dump(include=set(fieldnames)) for item in items],
         )
     CONSOLE.print(f"Exported {len(items)} items to '{file_path}'.")
+
+
+def print_error(msg: str) -> None:
+    get_console().print(f"[red]{msg}[/red]")
+
+
+def print_result(msg: str, success: bool) -> None:
+    get_console().print(
+        f"{msg}: "
+        f"{'[green]SUCCESS[/green]' if success else '[red]FAILURE[/red]'}"
+    )

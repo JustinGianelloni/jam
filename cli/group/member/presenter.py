@@ -14,21 +14,12 @@ from models.user import User
 SETTINGS = get_settings()
 
 
-def _get_group_table(title: str) -> Table:
-    return create_table(title, list(SETTINGS.console_group_fields.keys()))
-
-
-def _add_group_rows(table: Table, groups: list[Group]) -> None:
-    for group in groups:
-        row_values = [
-            getattr(group, attr)
-            for attr in SETTINGS.console_group_fields.values()
-        ]
-        table.add_row(*row_values)
-
-
 def _get_user_table(title: str) -> Table:
     return create_table(title, list(SETTINGS.console_user_fields.keys()))
+
+
+def _get_change_table(title: str) -> Table:
+    return create_table(title, ["op", "User", "Group"])
 
 
 def _add_user_rows(table: Table, users: list[User]) -> None:
@@ -40,17 +31,6 @@ def _add_user_rows(table: Table, users: list[User]) -> None:
         table.add_row(*row_values)
 
 
-def print_groups(groups: list[Group], json: bool) -> None:
-    if json:
-        print_json(groups)
-    elif is_piped():
-        print_values([group.id for group in groups])
-    else:
-        table = _get_group_table(f"User Groups - Total Count: {len(groups)}")
-        _add_group_rows(table, groups)
-        print_table(table)
-
-
 def print_group_members(members: list[User], json: bool) -> None:
     if json:
         print_json(members)
@@ -60,3 +40,15 @@ def print_group_members(members: list[User], json: bool) -> None:
         table = _get_user_table(f"Group Members - Total Count: {len(members)}")
         _add_user_rows(table, members)
         print_table(table)
+
+
+def print_change_confirmation(
+    users: list[User], groups: list[Group], op: str
+) -> None:
+    table = _get_change_table(
+        f"Pending Changes - Total Count: {len(users) * len(groups)}"
+    )
+    for group in groups:
+        for user in users:
+            table.add_row(op, user.email, group.name)
+    print_table(table)

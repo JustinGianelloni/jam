@@ -20,7 +20,7 @@ from core.config import init_config
 class JamConfigSource(JsonConfigSettingsSource):
     def __init__(self, settings_cls: type[BaseSettings]) -> None:
         config_path = init_config()
-        with open(config_path) as f:
+        with Path.open(config_path) as f:
             json_data = json.load(f)
         self._jam_config: dict[str, Any] = json_data.get("jam", {})
         super().__init__(settings_cls, config_path)
