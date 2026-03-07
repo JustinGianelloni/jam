@@ -9,6 +9,8 @@ A command-line interface for managing JumpCloud users and systems.
 - Retrieve full disk encryption (FDE) keys
 - Find systems bound to specific users
 - Find users bound to specific systems
+- List and manage user group memberships
+- List and search JumpCloud applications and their associated groups
 - Export data to CSV files
 - Output full JSON models to console (pipe to file with `>`)
 - Smart piping support with automatic output format detection
@@ -73,14 +75,14 @@ jam update
 
 ### User Commands
 
-User commands are accessed via the `users` subcommand group.
+User commands are accessed via the `user` subcommand group.
 
-#### `users list`
+#### `user list`
 
 List all system users in JumpCloud.
 
 ```bash
-jam users list [OPTIONS]
+jam user list [OPTIONS]
 ```
 
 **Options:**
@@ -90,6 +92,7 @@ jam users list [OPTIONS]
 - `--cost-center` - Filter users by cost center (e.g., `Data Engineering`)
 - `--title` - Filter users by job title (e.g., `Data Engineer`)
 - `--state` - Filter users by state (`ACTIVATED`, `SUSPENDED`, or `STAGED`)
+- `--type` - Filter users by employee type (e.g., `Full Time`, `Contractor`, or `Service`)
 - `-j`, `--json` - Return full JSON model of the user(s)
 - `--csv FILE` - Export results to a CSV file
 
@@ -97,33 +100,36 @@ jam users list [OPTIONS]
 
 ```bash
 # List all users (table format)
-jam users list
+jam user list
 
 # List activated users
-jam users list --state ACTIVATED
+jam user list --state ACTIVATED
 
 # List users by department and state
-jam users list --department Engineering --state ACTIVATED
+jam user list --department Engineering --state ACTIVATED
+
+# List contractors
+jam user list --type Contractor
 
 # List users with custom filter
-jam users list --filter 'employeeType:$eq:Contractor'
+jam user list --filter 'employeeType:$eq:Contractor'
 
 # Export to CSV
-jam users list --csv users.csv
+jam user list --csv users.csv
 
 # Get full JSON for all users
-jam users list --json
+jam user list --json
 
 # Pipe user IDs to another command
-jam users list --state ACTIVATED | jam users get --json
+jam user list --state ACTIVATED | jam user get --json
 ```
 
-#### `users get`
+#### `user get`
 
 Get one or more JumpCloud system users by their UUID(s).
 
 ```bash
-jam users get [USER_ID...] [OPTIONS]
+jam user get [USER_ID...] [OPTIONS]
 ```
 
 **Options:**
@@ -135,25 +141,25 @@ jam users get [USER_ID...] [OPTIONS]
 
 ```bash
 # Get a single user
-jam users get 685cb0f6ef36c7bd8ac56c24
+jam user get 685cb0f6ef36c7bd8ac56c24
 
 # Get multiple users
-jam users get 685cb0f6ef36c7bd8ac56c24 789cb0f6ef36c7bd8ac56c25
+jam user get 685cb0f6ef36c7bd8ac56c24 789cb0f6ef36c7bd8ac56c25
 
 # Get user details in JSON format
-jam users get 685cb0f6ef36c7bd8ac56c24 --json
-jam users get 685cb0f6ef36c7bd8ac56c24 -j > user.json
+jam user get 685cb0f6ef36c7bd8ac56c24 --json
+jam user get 685cb0f6ef36c7bd8ac56c24 -j > user.json
 
 # Get multiple users via pipe
-echo -e "685cb0f6ef36c7bd8ac56c24\n789cb0f6ef36c7bd8ac56c25" | jam users get
+echo -e "685cb0f6ef36c7bd8ac56c24\n789cb0f6ef36c7bd8ac56c25" | jam user get
 ```
 
-#### `users find`
+#### `user find`
 
 Find a JumpCloud user's UUID by their email address.
 
 ```bash
-jam users find [EMAIL] [OPTIONS]
+jam user find [EMAIL] [OPTIONS]
 ```
 
 **Options:**
@@ -165,18 +171,18 @@ jam users find [EMAIL] [OPTIONS]
 
 ```bash
 # Find user and display ID
-jam users find user@example.com
+jam user find user@example.com
 
 # Find user and display full JSON details
-jam users find user@example.com --json
+jam user find user@example.com --json
 ```
 
-#### `users bound-systems`
+#### `user bound-systems`
 
 Find all systems bound to a JumpCloud user.
 
 ```bash
-jam users bound-systems [USER_ID] [OPTIONS]
+jam user bound-systems [USER_ID] [OPTIONS]
 ```
 
 **Options:**
@@ -188,22 +194,22 @@ jam users bound-systems [USER_ID] [OPTIONS]
 
 ```bash
 # List bound systems as a table
-jam users bound-systems 685cb0f6ef36c7bd8ac56c24
+jam user bound-systems 685cb0f6ef36c7bd8ac56c24
 
 # Get full JSON details of bound systems
-jam users bound-systems 685cb0f6ef36c7bd8ac56c24 --json
+jam user bound-systems 685cb0f6ef36c7bd8ac56c24 --json
 ```
 
 ### System Commands
 
-System commands are accessed via the `systems` subcommand group.
+System commands are accessed via the `system` subcommand group.
 
-#### `systems list`
+#### `system list`
 
 List all systems in JumpCloud.
 
 ```bash
-jam systems list [OPTIONS]
+jam system list [OPTIONS]
 ```
 
 **Options:**
@@ -218,33 +224,33 @@ jam systems list [OPTIONS]
 
 ```bash
 # List all systems (table format)
-jam systems list
+jam system list
 
 # List systems by OS family
-jam systems list --os-family darwin
+jam system list --os-family darwin
 
 # List systems by specific OS
-jam systems list --os Windows
+jam system list --os Windows
 
 # List systems with custom filter
-jam systems list --filter 'osFamily:$eq:Windows'
+jam system list --filter 'osFamily:$eq:Windows'
 
 # Export to CSV
-jam systems list --csv systems.csv
+jam system list --csv systems.csv
 
 # Get full JSON for all systems
-jam systems list --json
+jam system list --json
 
 # Pipe system IDs to another command
-jam systems list --os-family darwin | jam systems get --json
+jam system list --os-family darwin | jam system get --json
 ```
 
-#### `systems get`
+#### `system get`
 
 Get one or more JumpCloud systems by their UUID(s).
 
 ```bash
-jam systems get [SYSTEM_ID...] [OPTIONS]
+jam system get [SYSTEM_ID...] [OPTIONS]
 ```
 
 **Options:**
@@ -256,25 +262,25 @@ jam systems get [SYSTEM_ID...] [OPTIONS]
 
 ```bash
 # Get a single system
-jam systems get 69879fa9b5be2f2184d700da
+jam system get 69879fa9b5be2f2184d700da
 
 # Get multiple systems
-jam systems get 69879fa9b5be2f2184d700da 79879fa9b5be2f2184d700db
+jam system get 69879fa9b5be2f2184d700da 79879fa9b5be2f2184d700db
 
 # Get system details in JSON format
-jam systems get 69879fa9b5be2f2184d700da --json
-jam systems get 69879fa9b5be2f2184d700da -j > system.json
+jam system get 69879fa9b5be2f2184d700da --json
+jam system get 69879fa9b5be2f2184d700da -j > system.json
 
 # Get multiple systems via pipe
-echo -e "69879fa9b5be2f2184d700da\n79879fa9b5be2f2184d700db" | jam systems get
+echo -e "69879fa9b5be2f2184d700da\n79879fa9b5be2f2184d700db" | jam system get
 ```
 
-#### `systems find`
+#### `system find`
 
 Find a JumpCloud system's UUID by its hostname or serial number.
 
 ```bash
-jam systems find [QUERY] [OPTIONS]
+jam system find [QUERY] [OPTIONS]
 ```
 
 **Options:**
@@ -286,33 +292,33 @@ jam systems find [QUERY] [OPTIONS]
 
 ```bash
 # Find system and display ID
-jam systems find DESKTOP-ABC123
-jam systems find C02XG123ABC
+jam system find DESKTOP-ABC123
+jam system find C02XG123ABC
 
 # Find system and display full JSON details
-jam systems find DESKTOP-ABC123 --json
+jam system find DESKTOP-ABC123 --json
 ```
 
-#### `systems fde-key`
+#### `system fde-key`
 
 Retrieve the full disk encryption key for a system.
 
 ```bash
-jam systems fde-key [SYSTEM_ID]
+jam system fde-key [SYSTEM_ID]
 ```
 
 **Examples:**
 
 ```bash
-jam systems fde-key 69879fa9b5be2f2184d700da
+jam system fde-key 69879fa9b5be2f2184d700da
 ```
 
-#### `systems bound-users`
+#### `system bound-users`
 
 Find all users bound to a JumpCloud system.
 
 ```bash
-jam systems bound-users [SYSTEM_ID] [OPTIONS]
+jam system bound-users [SYSTEM_ID] [OPTIONS]
 ```
 
 **Options:**
@@ -324,22 +330,22 @@ jam systems bound-users [SYSTEM_ID] [OPTIONS]
 
 ```bash
 # List bound users as a table
-jam systems bound-users 69879fa9b5be2f2184d700da
+jam system bound-users 69879fa9b5be2f2184d700da
 
 # Get full JSON details of bound users
-jam systems bound-users 69879fa9b5be2f2184d700da --json
+jam system bound-users 69879fa9b5be2f2184d700da --json
 ```
 
 ### Group Commands
 
-Group commands are accessed via the `groups` subcommand group.
+Group commands are accessed via the `group` subcommand group.
 
-#### `groups list`
+#### `group list`
 
 List all user groups in JumpCloud.
 
 ```bash
-jam groups list [OPTIONS]
+jam group list [OPTIONS]
 ```
 
 **Options:**
@@ -353,32 +359,32 @@ jam groups list [OPTIONS]
 
 ```bash
 # List all user groups (table format)
-jam groups list
+jam group list
 
 # List groups filtered by name
-jam groups list --name Engineering
+jam group list --name Engineering
 
 # List groups with custom filter
-jam groups list --filter 'name:search:Eng'
+jam group list --filter 'name:search:Eng'
 
 # Export to CSV
-jam groups list --csv groups.csv
+jam group list --csv groups.csv
 
 # Get full JSON for all groups
-jam groups list --json
+jam group list --json
 ```
 
-#### `groups get-members`
+#### `group member list`
 
-List all members of a JumpCloud user group.
+List all members of one or more JumpCloud user groups.
 
 ```bash
-jam groups get-members [GROUP_ID] [OPTIONS]
+jam group member list [GROUP_ID...] [OPTIONS]
 ```
 
 **Options:**
 
-- `GROUP_ID` - A valid UUID for a JumpCloud user group
+- `GROUP_ID` - One or more valid UUIDs for JumpCloud user groups (space-separated or via pipe)
 - `-j`, `--json` - Return full JSON model of the group members
 - `--csv FILE` - Export results to a CSV file
 
@@ -386,13 +392,121 @@ jam groups get-members [GROUP_ID] [OPTIONS]
 
 ```bash
 # List group members as a table
-jam groups get-members 689e1335e907ee000186085f
+jam group member list 689e1335e907ee000186085f
+
+# List members across multiple groups
+jam group member list 689e1335e907ee000186085f 789e1335e907ee000186085f
 
 # Get full JSON details of group members
-jam groups get-members 689e1335e907ee000186085f --json
+jam group member list 689e1335e907ee000186085f --json
 
 # Export group members to CSV
-jam groups get-members 689e1335e907ee000186085f --csv members.csv
+jam group member list 689e1335e907ee000186085f --csv members.csv
+```
+
+#### `group member add`
+
+Add one or more users to one or more JumpCloud user groups. Displays a confirmation prompt before making any changes.
+
+```bash
+jam group member add [OPTIONS]
+```
+
+**Options:**
+
+- `--group-id` - A valid UUID for a JumpCloud group
+- `-n`, `--name` - A valid name for a JumpCloud group
+- `--group-csv FILE` - A CSV list of group IDs to update
+- `-u`, `--user` - A valid UUID for a JumpCloud user
+- `-e`, `--email` - A valid email address for a JumpCloud user
+- `--user-csv FILE` - A CSV list of user IDs to add
+
+Exactly one group selector (`--group-id`, `--name`, or `--group-csv`) and one user selector (`--user`, `--email`, or `--user-csv`) must be provided.
+
+**Examples:**
+
+```bash
+# Add a single user to a single group by ID
+jam group member add --group-id 689e1335e907ee000186085f --user 685cb0f6ef36c7bd8ac56c24
+
+# Add a user to a group by name and email
+jam group member add --name Engineering --email user@example.com
+
+# Add multiple users (via CSV) to multiple groups (via CSV)
+jam group member add --group-csv groups.csv --user-csv users.csv
+
+# Add a single user to multiple groups via CSV
+jam group member add --group-csv groups.csv --email user@example.com
+```
+
+### Application Commands
+
+Application commands are accessed via the `application` subcommand group.
+
+#### `application list`
+
+List all applications in JumpCloud.
+
+```bash
+jam application list [OPTIONS]
+```
+
+**Options:**
+
+- `--filter` - Filter using JumpCloud's filter syntax (e.g., `name:$eq:GitHub Prod`). Can be used multiple times.
+- `--name` - Filter applications by name (e.g., `GitHub Prod`)
+- `-a`, `--active` - Show only active applications
+- `-i`, `--inactive` - Show only inactive applications
+- `-j`, `--json` - Return full JSON model of the application(s)
+- `--csv FILE` - Export results to a CSV file
+
+**Examples:**
+
+```bash
+# List all applications (table format)
+jam application list
+
+# List applications filtered by name
+jam application list --name "GitHub Prod"
+
+# List only active applications
+jam application list --active
+
+# List only inactive applications
+jam application list --inactive
+
+# Export to CSV
+jam application list --csv apps.csv
+
+# Get full JSON for all applications
+jam application list --json
+```
+
+#### `application group list`
+
+List all user groups associated with a JumpCloud application.
+
+```bash
+jam application group list [APP_ID] [OPTIONS]
+```
+
+**Options:**
+
+- `APP_ID` - A valid UUID for a JumpCloud application
+- `-j`, `--json` - Return full JSON model of the group(s)
+- `--csv FILE` - Export results to a CSV file
+
+**Examples:**
+
+```bash
+# List groups associated with an application
+jam application group list 64dfcc79523de4972dce15f0
+
+# Get full JSON details of associated groups
+jam application group list 64dfcc79523de4972dce15f0 --json
+
+# Export associated groups to CSV
+jam application group list 64dfcc79523de4972dce15f0 --csv app-groups.csv
 ```
 
 ### Config Commands
@@ -465,48 +579,48 @@ commands.
 
 ```bash
 # Find a user and get their details
-jam users find user@example.com | jam users get
+jam user find user@example.com | jam user get
 
 # Find a user and list their bound systems
-jam users find user@example.com | jam users bound-systems
+jam user find user@example.com | jam user bound-systems
 
 # Find a system and get its FDE key
-jam systems find DESKTOP-ABC123 | jam systems fde-key
+jam system find DESKTOP-ABC123 | jam system fde-key
 
 # Find a system and list its bound users
-jam systems find DESKTOP-ABC123 | jam systems bound-users
+jam system find DESKTOP-ABC123 | jam system bound-users
 ```
 
 ### Advanced Piping Examples
 
 ```bash
 # Get full JSON details for all activated users
-jam users list --state ACTIVATED | jam users get --json
+jam user list --state ACTIVATED | jam user get --json
 
 # Get details for all macOS systems
-jam systems list --os-family darwin | jam systems get
+jam system list --os-family darwin | jam system get
 
 # Export all Windows systems to JSON files
-jam systems list --os-family windows | jam systems get --json > windows-systems.json
+jam system list --os-family windows | jam system get --json > windows-systems.json
 
 # Get FDE keys for all systems in a department's users' computers
-jam users list --department Engineering | jam users bound-systems | jam systems fde-key
+jam user list --department Engineering | jam user bound-systems | jam system fde-key
 
 # Find all systems bound to contractors
-jam users list --filter 'employeeType:$eq:Contractor' | jam users bound-systems
+jam user list --type Contractor | jam user bound-systems
 
 # Get detailed info for multiple specific users
-echo -e "685cb0f6ef36c7bd8ac56c24\n789cb0f6ef36c7bd8ac56c25" | jam users get --json
+echo -e "685cb0f6ef36c7bd8ac56c24\n789cb0f6ef36c7bd8ac56c25" | jam user get --json
 ```
 
 ### How Piping Works
 
-- **When output is piped** (e.g., `jam users list | ...`):
+- **When output is piped** (e.g., `jam user list | ...`):
     - Resource commands output IDs only, one per line
     - Perfect for chaining into other commands
     - No visual formatting or tables
 
-- **When output is NOT piped** (e.g., `jam users list`):
+- **When output is NOT piped** (e.g., `jam user list`):
     - Displays rich formatted tables with multiple columns
     - Easy to read in the terminal
     - Shows total count and relevant fields
@@ -523,13 +637,16 @@ Many commands now accept multiple IDs, enabling batch operations:
 
 ```bash
 # Get multiple users at once
-jam users get 685cb0f6ef36c7bd8ac56c24 789cb0f6ef36c7bd8ac56c25 812cb0f6ef36c7bd8ac56c26
+jam user get 685cb0f6ef36c7bd8ac56c24 789cb0f6ef36c7bd8ac56c25 812cb0f6ef36c7bd8ac56c26
 
 # Get multiple systems at once
-jam systems get 69879fa9b5be2f2184d700da 79879fa9b5be2f2184d700db
+jam system get 69879fa9b5be2f2184d700da 79879fa9b5be2f2184d700db
 
 # Process results from a list command
-jam users list --department Engineering | jam users get --json
+jam user list --department Engineering | jam user get --json
+
+# List members of multiple groups at once
+jam group member list 689e1335e907ee000186085f 789e1335e907ee000186085f
 ```
 
 ## Configuration
@@ -547,7 +664,18 @@ Configuration is stored in `~/.config/jam/config.json`:
 ### Customizing Output Fields
 
 You can customize which fields are displayed in console output and CSV exports by modifying the field mappings in
-`config.json`:
+`config.json`. The following field mapping keys are supported:
+
+| Key                     | Controls                                      |
+|-------------------------|-----------------------------------------------|
+| `console_user_fields`   | Columns shown in the terminal for users       |
+| `csv_user_fields`       | Columns written to CSV for users              |
+| `console_system_fields` | Columns shown in the terminal for systems     |
+| `csv_system_fields`     | Columns written to CSV for systems            |
+| `console_group_fields`  | Columns shown in the terminal for groups      |
+| `csv_group_fields`      | Columns written to CSV for groups             |
+| `console_app_fields`    | Columns shown in the terminal for applications |
+| `csv_app_fields`        | Columns written to CSV for applications       |
 
 ```json
 {
@@ -562,6 +690,16 @@ You can customize which fields are displayed in console output and CSV exports b
       "ID": "id",
       "State": "state",
       "Email": "email"
+    },
+    "console_app_fields": {
+      "ID": "id",
+      "Display Name": "display_label",
+      "Active": "active"
+    },
+    "csv_app_fields": {
+      "ID": "id",
+      "Display Name": "display_label",
+      "Active": "active"
     }
   }
 }
@@ -597,9 +735,11 @@ JumpCloud API.
     - Under **Permissions**, assign the required access levels:
         - **Read Users** - Required for user listing and search operations
         - **Read Systems** - Required for system listing and search operations
-        - **Read User Groups** - Required for group operations
+        - **Read User Groups** - Required for group listing operations
+        - **Write User Groups** - Required for `group member add`
         - **Read System Associations** - Required for bound-users and bound-systems commands
         - **Read FDE Keys** - Required for the fde-key command
+        - **Read Applications** - Required for application listing operations
     - Click **Save** to apply permissions
 
 ### Configuring JAM with Your Credentials
@@ -648,4 +788,3 @@ the [official documentation](https://jumpcloud.com/support/service-account-for-a
 ## License
 
 See [LICENSE](LICENSE) for details.
-

@@ -12,8 +12,6 @@ from rich.table import Table
 from core.progress import get_console
 
 CONSOLE = Console()
-OUTPUT_DIR = Path(__file__).parent.parent / "output"
-
 
 def is_piped() -> bool:
     return not sys.stdout.isatty()
@@ -58,8 +56,7 @@ def save_to_csv(
     filename: str,
     field_mapping: dict[str, str],
 ) -> None:
-    OUTPUT_DIR.mkdir(exist_ok=True)
-    file_path = OUTPUT_DIR / filename
+    file_path = Path.cwd() / filename
     fieldnames = list(field_mapping.values())
     with Path.open(file_path, "w") as file:
         writer = DictWriter(file, fieldnames=fieldnames)

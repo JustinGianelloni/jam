@@ -10,7 +10,7 @@ from cli.group.member import presenter as member_presenter
 from cli.group.member.exceptions import MemberChangeError
 from cli.input import (
     read_csv_list,
-    resolve_argument,
+    resolve_list_argument,
     resolve_optional_argument,
 )
 from cli.output import print_error, print_result, save_to_csv
@@ -25,7 +25,7 @@ app = typer.Typer()
 
 @app.command(name="list")
 def get_group_members(
-    group_id: str | None = typer.Argument(
+    group_ids: list[str] | None = typer.Argument(
         None,
         help="A valid UUID for a JumpCloud group, e.g. "
         "'689e1335e907ee000186085f'",
@@ -46,19 +46,21 @@ def get_group_members(
     """
     List all members of a JumpCloud user group.
     """
-    group_id = resolve_argument(group_id, "Group ID")
+    group_ids = resolve_list_argument(group_ids)
 
     async def fetch_data() -> tuple[list[User], list[str]]:
         _users, _members = await asyncio.gather(
             usr_api.list_users([]),
-            grp_api.get_group_members(group_id),
+            grp_api.get_groups_members(group_ids),
         )
         return _users, _members
 
     with progress_context():
         users, members = asyncio.run(fetch_data())
     user_dict = {user.id: user for user in users}
-    member_list = [user_dict[member] for member in members]
+    member_list = list(
+        {member: user_dict[member] for member in members}.values()
+    )
     member_presenter.print_group_members(member_list, json)
     if csv_file:
         save_to_csv(member_list, csv_file, SETTINGS.csv_user_fields)
@@ -68,10 +70,10 @@ def get_group_by_name(group_name: str) -> list[Group]:
     groups = asyncio.run(grp_api.list_groups([f"name:eq:{group_name}"]))
     if not groups:
         print_error(f"No group found with name: {group_name}")
-        typer.Exit(1)
+        raise typer.Exit(1)
     if len(groups) > 1:
         print_error(f"{len(groups)} groups found with name: {group_name}")
-        typer.Exit(1)
+        raise typer.Exit(1)
     return groups
 
 
@@ -79,7 +81,7 @@ def get_groups_by_csv(path: Path, group_dict: dict[str, Group]) -> list[Group]:
     groups = read_csv_list(path)
     if not groups:
         print_error(f"No groups found in path: {path}")
-        typer.Exit(1)
+        raise typer.Exit(1)
     return [group_dict[group] for group in groups]
 
 
@@ -87,10 +89,10 @@ def get_user_by_email(email: str) -> list[User]:
     users = asyncio.run(usr_api.list_users([f"email:$eq:{email}"]))
     if not users:
         print_error(f"No user found with email: {email}")
-        typer.Exit(1)
+        raise typer.Exit(1)
     if len(users) > 1:
         print_error(f"{len(users)} users found with email: {email}")
-        typer.Exit(1)
+        raise typer.Exit(1)
     return users
 
 
@@ -98,7 +100,7 @@ def get_users_by_csv(path: Path, user_dict: dict[str, User]) -> list[User]:
     users = read_csv_list(path)
     if not users:
         print_error(f"No users found in path: {path}")
-        typer.Exit(1)
+        raise typer.Exit(1)
     return [user_dict[user] for user in users]
 
 
@@ -119,7 +121,7 @@ def resolve_groups(
             "No group(s) specified. Pass a group as an argument, "
             "by using the '--name' option or via --group_csv"
         )
-        typer.Exit(1)
+        raise typer.Exit(1)
     return groups
 
 
@@ -140,7 +142,7 @@ def resolve_users(
             "No user(s) specified. Specify a user using --user, --email, or "
             "--user_csv"
         )
-        typer.Exit(1)
+        raise typer.Exit(1)
     return users
 
 
@@ -200,7 +202,7 @@ users can be added to any number of groups by utilizing csv files.
             grp_api.list_groups([]),
         )
         return {user.id: user for user in _users}, {
-            group.id: group for group in groups
+            group.id: group for group in _groups
         }
 
     async def context_wrapper(group: Group, user: User) -> tuple[Group, User]:
@@ -235,7 +237,7 @@ users can be added to any number of groups by utilizing csv files.
     users = resolve_users(user_id, email, user_csv, user_dict)
     member_presenter.print_change_confirmation(users, groups, "Add")
     typer.confirm(
-        f"The {len(users) * len(groups)} changes listed above are"
+        f"The {len(users) * len(groups)} changes listed above are "
         "pending. Do you wish to proceed?"
     )
     with progress_context():

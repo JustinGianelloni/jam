@@ -12,7 +12,7 @@ PYPROJECT_PATH = PROJECT_ROOT / "pyproject.toml"
 
 def get_repo_url() -> str:
     with PYPROJECT_PATH.open() as file:
-        pyproject = tomlkit.load(file)
+        pyproject = tomlkit.load(file).unwrap()
     return str(pyproject["project"]["urls"]["Repository"])
 
 
