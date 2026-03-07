@@ -37,6 +37,7 @@ class Settings(BaseSettings):
             )
         )
     )
+    JAM_WORKING_DIRECTORY: Path = Field(default=Path())
     JAM_CLIENT_ID: str = Field(default="")
     JAM_CLIENT_SECRET: str = Field(default="")
     api_url: str = Field(default="https://console.jumpcloud.com/api")
