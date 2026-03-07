@@ -49,7 +49,7 @@ async def get_user(user_id: str) -> User:
 
 async def get_users(user_ids: list[str]) -> list[User]:
     task_id = add_task(
-        f"Fetching {len(user_ids)} from JumpCloud", total=len(user_ids)
+        f"Fetching {len(user_ids)} users from JumpCloud", total=len(user_ids)
     )
     tasks = [get_user(user_id) for user_id in user_ids]
     users: list[User] = []

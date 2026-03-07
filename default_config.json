@@ -45,6 +45,16 @@
       "ID": "id",
       "Name": "name",
       "Description": "description"
+    },
+    "console_app_fields": {
+      "ID": "id",
+      "Display Name": "display_label",
+      "Active": "active"
+    },
+    "csv_app_fields": {
+      "ID": "id",
+      "Display Name": "display_label",
+      "Active": "active"
     }
   }
 }

@@ -8,14 +8,12 @@ from rich.progress import Progress, TaskID
 _progress_ctx: ContextVar[Progress | None] = ContextVar(
     "progress", default=None
 )
-_console_ctx: ContextVar[Console | None] = ContextVar(
-    "console", default=None
-)
+_console_ctx: ContextVar[Console | None] = ContextVar("console", default=None)
 
 
 @contextmanager
 def progress_context() -> Generator[Progress]:
-    console = Console()
+    console = Console(stderr=True)
     progress = Progress(console=console)
     token_p = _progress_ctx.set(progress)
     token_c = _console_ctx.set(console)

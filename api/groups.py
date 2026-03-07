@@ -10,7 +10,9 @@ SETTINGS = get_settings()
 
 async def list_groups(filters: list[str]) -> list[Group]:
     endpoint = "/v2/usergroups"
-    base_params: list[tuple[str, str | int]] = [("limit", SETTINGS.limit)]
+    base_params: list[tuple[str, str | int | float | None]] = [
+        ("limit", SETTINGS.limit)
+    ]
     [base_params.append(("filter", f)) for f in filters]
     first_params = [*base_params, ("skip", 0)]
     response = await get_client().get(endpoint, params=first_params)
@@ -78,6 +80,20 @@ async def get_group_members(group_id: str) -> list[str]:
             users.extend(result["to"]["id"] for result in body)
             update_task(task_id, advance=len(body))
     return users
+
+
+async def get_groups_members(group_ids: list[str]) -> list[str]:
+    task_id = add_task(
+        f"Fetching {len(group_ids)} groups from JumpCloud",
+        total=len(group_ids),
+    )
+    tasks = [get_group_members(group_id) for group_id in group_ids]
+    members: list[str] = []
+    for task in asyncio.as_completed(tasks):
+        group = await task
+        members.extend(group)
+        update_task(task_id, advance=1)
+    return members
 
 
 async def add_group_member(group_id: str, user_id: str) -> None:

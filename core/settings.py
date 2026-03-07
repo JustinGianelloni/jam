@@ -52,6 +52,8 @@ class Settings(BaseSettings):
     csv_system_fields: dict[str, str] = Field(default_factory=dict)
     console_group_fields: dict[str, str] = Field(default_factory=dict)
     csv_group_fields: dict[str, str] = Field(default_factory=dict)
+    console_app_fields: dict[str, str] = Field(default_factory=dict)
+    csv_app_fields: dict[str, str] = Field(default_factory=dict)
     model_config = SettingsConfigDict(
         env_file=Path(
             os.environ.get(

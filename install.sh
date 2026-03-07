@@ -83,6 +83,31 @@ choose_field() {
   fzf --prompt="$prompt_text" --height=10% --reverse | sed 's/.*: //'
 }
 
+backfill_config() {
+  local default_config="$INSTALL_DIR/default_config.json"
+  if [[ ! -f "$default_config" ]]; then
+    echo "Warning: default_config.json not found, skipping config backfill."
+    return
+  fi
+
+  local added
+  added=$(jq -rn \
+    --slurpfile def "$default_config" \
+    --slurpfile usr "$CONFIG_FILE" \
+    '(($def[0].jam // {}) | keys) - (($usr[0].jam // {}) | keys) | .[]')
+
+  if [[ -z "$added" ]]; then
+    return
+  fi
+
+  echo "Adding missing config fields: $(echo "$added" | tr '\n' ' ')"
+  local tmp
+  tmp=$(mktemp)
+  jq -s '.[1] + {jam: ((.[0].jam // {}) + (.[1].jam // {}))}' \
+    "$default_config" "$CONFIG_FILE" > "$tmp" \
+    && mv "$tmp" "$CONFIG_FILE"
+}
+
 get_op_creds() {
   read -r -e -p "What is the name of the saved credential in 1Password (e.g. JC_OAUTH)? " op_title </dev/tty
   op_json=$(op item get "$op_title" --format json)
@@ -170,6 +195,7 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
   curl -fsSL "$CONFIG_URL" -o "$CONFIG_FILE"
 else
   echo "Config file already exists, skipping download."
+  backfill_config
 fi
 
 # Configure 1Password credentials if selected
