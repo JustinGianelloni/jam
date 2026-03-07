@@ -10,6 +10,7 @@ from rich.console import Console
 from rich.table import Table
 
 from core.progress import get_console
+from core.settings import get_settings
 
 CONSOLE = Console()
 
@@ -56,7 +57,7 @@ def save_to_csv(
     filename: str,
     field_mapping: dict[str, str],
 ) -> None:
-    file_path = Path.cwd() / filename
+    file_path = get_settings().JAM_WORKING_DIR / filename
     fieldnames = list(field_mapping.values())
     with Path.open(file_path, "w") as file:
         writer = DictWriter(file, fieldnames=fieldnames)
