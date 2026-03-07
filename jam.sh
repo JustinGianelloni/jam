@@ -2,6 +2,7 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+export JAM_WORKING_DIR="$PWD"
 cd "$SCRIPT_DIR" || exit 1
 
 config_path="${JAM_CONFIG_PATH:-$HOME/.config/jam}"
