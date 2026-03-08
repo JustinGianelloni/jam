@@ -4,12 +4,17 @@ import typer
 
 from api import systems as sys_api
 from api import users as usr_api
+from api.systems import SystemNotFoundError
 from api.users import (
     NoUsersFoundError,
     UserEmailNotFoundError,
     UserNotFoundError,
 )
-from cli.input import resolve_argument, resolve_list_argument
+from cli.input import (
+    resolve_argument,
+    resolve_list_argument,
+    resolve_optional_argument,
+)
 from cli.output import print_error, save_to_csv
 from cli.system import presenter as sys_presenter
 from cli.user import presenter as usr_presenter
@@ -166,6 +171,12 @@ def bound_systems(
         help="A valid UUID for a JumpCloud user, e.g. "
         "'685cb0f6ef36c7bd8ac56c24'",
     ),
+    email: str | None = typer.Option(
+        None,
+        "-e",
+        "--email",
+        help="A valid email address for a JumpCloud user.",
+    ),
     json: bool = typer.Option(
         False,
         "-j",
@@ -175,11 +186,41 @@ def bound_systems(
     ),
 ) -> None:
     """
-Find all systems bound to a JumpCloud user by the user's UUID. If the query \
-returns multiple results, a table of matching systems will be displayed \
-instead of a list of UUIDs.
+    Returns a table of all systems bound to a JumpCloud user.
     """
-    user_id = resolve_argument(user_id, "User ID")
-    system_ids = asyncio.run(usr_api.list_bound_systems(user_id))
-    systems = asyncio.run(sys_api.get_systems(system_ids))
+    user_id = resolve_optional_argument(user_id)
+    if user_id and email:
+        msg = ("'--user_id' and '--email' are mutually exclusive. "
+            "Use 'jam user bound-systems --help' for details.")
+        raise typer.BadParameter(msg)
+    if not user_id and not email:
+        msg = ("'--user_id' or '--email' must be specified. "
+            "Use 'jam user bound-systems --help' for details.")
+        raise typer.BadParameter(msg, param_hint="'--user_id'")
+    if email:
+        try:
+            user_ids = asyncio.run(usr_api.find_user(email))
+            if len(user_ids) > 1:
+                print_error(f"More than one user for for email '{email}'")
+                raise typer.Exit(1)
+            user_id = user_ids[0].id
+        except UserEmailNotFoundError as e:
+            print_error(f"No user found with email '{e.email}'")
+            raise typer.Exit(1) from e
+    if not user_id:
+        msg = "'--user_id' or '--email' must be specified."
+        raise typer.BadParameter(msg, param_hint="'--user_id'")
+    try:
+        system_ids = asyncio.run(usr_api.list_bound_systems(user_id))
+    except UserNotFoundError as e:
+        print_error(f"No user found with ID '{e.user_id}'")
+        raise typer.Exit(1) from e
+    if not system_ids:
+        print_error(f"No systems bound to user with ID '{user_id}'")
+        raise typer.Exit(1)
+    try:
+        systems = asyncio.run(sys_api.get_systems(system_ids))
+    except SystemNotFoundError as e:
+        print_error(f"No system found with ID '{e.system_id}'")
+        raise typer.Exit(1) from e
     sys_presenter.print_systems(systems, json)

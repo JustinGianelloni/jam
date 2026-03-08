@@ -1,4 +1,5 @@
 import asyncio
+from http import HTTPStatus
 
 from core.client import get_client
 from core.progress import add_task, update_task
@@ -6,6 +7,12 @@ from core.settings import get_settings
 from models.system import Association, System
 
 SETTINGS = get_settings()
+
+
+class SystemNotFoundError(ValueError):
+    def __init__(self, system_id: str) -> None:
+        self.system_id = system_id
+        super().__init__()
 
 
 async def list_systems(filters: list[str] | None = None) -> list[System]:
@@ -48,6 +55,8 @@ async def list_systems(filters: list[str] | None = None) -> list[System]:
 async def get_system(system_id: str) -> System:
     endpoint = f"/systems/{system_id}"
     response = await get_client().get(endpoint)
+    if response.status_code == HTTPStatus.BAD_REQUEST:
+        raise SystemNotFoundError(system_id)
     response.raise_for_status()
     return System(**response.json())
 

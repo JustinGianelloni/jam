@@ -172,6 +172,8 @@ async def find_user(email: str) -> list[User]:
 async def list_bound_systems(user_id: str) -> list[str]:
     endpoint = f"/v2/users/{user_id}/systems"
     response = await get_client().get(endpoint)
+    if response.status_code == HTTPStatus.BAD_REQUEST:
+        raise UserNotFoundError(user_id)
     response.raise_for_status()
     body = response.json()
     return [result.get("id") for result in body]
