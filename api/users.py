@@ -1,4 +1,5 @@
 import asyncio
+from http import HTTPStatus
 
 from core.client import get_client
 from core.progress import add_task, update_task
@@ -57,6 +58,8 @@ async def list_users(filters: list[str]) -> list[User]:
 async def get_user(user_id: str) -> User:
     endpoint = f"/systemusers/{user_id}"
     response = await get_client().get(endpoint)
+    if response.status_code == HTTPStatus.BAD_REQUEST:
+        raise UserNotFoundError(user_id)
     response.raise_for_status()
     return User(**response.json())
 

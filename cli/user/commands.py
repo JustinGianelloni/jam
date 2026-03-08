@@ -4,7 +4,7 @@ import typer
 
 from api import systems as sys_api
 from api import users as usr_api
-from api.users import NoUsersFoundError
+from api.users import NoUsersFoundError, UserNotFoundError
 from cli.input import resolve_argument, resolve_list_argument
 from cli.output import print_error, save_to_csv
 from cli.system import presenter as sys_presenter
@@ -118,8 +118,12 @@ Get a JumpCloud system user by their UUID. Use 'find-user' to get a user's \
 UUID by their email address.
     """
     user_ids = resolve_list_argument(user_ids)
-    with progress_context():
-        users = asyncio.run(usr_api.get_users(user_ids))
+    try:
+        with progress_context():
+            users = asyncio.run(usr_api.get_users(user_ids))
+    except UserNotFoundError as e:
+        print_error(f"No user found with ID '{e.user_id}'")
+        raise typer.Exit(1) from e
     usr_presenter.print_users(users, json)
 
 
