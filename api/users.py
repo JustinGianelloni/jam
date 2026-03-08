@@ -8,7 +8,19 @@ from models.user import MFA, User
 SETTINGS = get_settings()
 
 
-async def list_users(filters: list[str] | None = None) -> list[User]:
+class UserNotFoundError(ValueError):
+    def __init__(self, user_id: str) -> None:
+        self.user_id = user_id
+        super().__init__()
+
+
+class NoUsersFoundError(ValueError):
+    def __init__(self, filters: list[str]) -> None:
+        self.filters = filters
+        super().__init__()
+
+
+async def list_users(filters: list[str]) -> list[User]:
     endpoint = "/systemusers"
     base_params = {"limit": SETTINGS.limit, "sort": "_id"}
     for i, f in enumerate(filters or []):
@@ -17,6 +29,8 @@ async def list_users(filters: list[str] | None = None) -> list[User]:
     response = await get_client().get(endpoint, params=first_params)
     response.raise_for_status()
     body = response.json()
+    if not body.get("results"):
+        raise NoUsersFoundError(filters)
     total = body.get("totalCount", 0)
     users = [User(**result) for result in body.get("results")]
     if len(users) == total:

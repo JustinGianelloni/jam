@@ -4,8 +4,9 @@ import typer
 
 from api import systems as sys_api
 from api import users as usr_api
+from api.users import NoUsersFoundError
 from cli.input import resolve_argument, resolve_list_argument
-from cli.output import save_to_csv
+from cli.output import print_error, save_to_csv
 from cli.system import presenter as sys_presenter
 from cli.user import presenter as usr_presenter
 from core.progress import progress_context
@@ -86,8 +87,12 @@ combined into a single list of filters.
         filters.append(f"state:$eq:{state}")
     if employee_type:
         filters.append(f"employeeType:$eq:{employee_type}")
-    with progress_context():
-        users = asyncio.run(usr_api.list_users(filters))
+    try:
+        with progress_context():
+            users = asyncio.run(usr_api.list_users(filters))
+    except NoUsersFoundError as e:
+        print_error(f"No users found with provided filters: {e.filters}")
+        raise typer.Exit(1) from e
     usr_presenter.print_users(users, json)
     if csv_file:
         save_to_csv(users, csv_file, SETTINGS.csv_user_fields)
