@@ -21,6 +21,12 @@ class NoUsersFoundError(ValueError):
         super().__init__()
 
 
+class UserEmailNotFoundError(ValueError):
+    def __init__(self, email: str) -> None:
+        self.email = email
+        super().__init__()
+
+
 async def list_users(filters: list[str]) -> list[User]:
     endpoint = "/systemusers"
     base_params = {"limit": SETTINGS.limit, "sort": "_id"}
@@ -158,6 +164,8 @@ async def find_user(email: str) -> list[User]:
     response = await get_client().post(endpoint, json=data)
     response.raise_for_status()
     body = response.json()
+    if not body.get("results"):
+        raise UserEmailNotFoundError(email)
     return [User(**result) for result in body.get("results")]
 
 

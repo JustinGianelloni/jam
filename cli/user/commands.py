@@ -4,7 +4,11 @@ import typer
 
 from api import systems as sys_api
 from api import users as usr_api
-from api.users import NoUsersFoundError, UserNotFoundError
+from api.users import (
+    NoUsersFoundError,
+    UserEmailNotFoundError,
+    UserNotFoundError,
+)
 from cli.input import resolve_argument, resolve_list_argument
 from cli.output import print_error, save_to_csv
 from cli.system import presenter as sys_presenter
@@ -147,7 +151,11 @@ multiple results, a table of matching users will be displayed instead of a \
 single UUID.
     """
     email = resolve_argument(email, "Email")
-    users = asyncio.run(usr_api.find_user(email))
+    try:
+        users = asyncio.run(usr_api.find_user(email))
+    except UserEmailNotFoundError as e:
+        print_error(f"No user found with email '{e.email}'")
+        raise typer.Exit(1) from e
     usr_presenter.print_users(users, json)
 
 
