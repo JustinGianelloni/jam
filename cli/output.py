@@ -14,6 +14,7 @@ from core.settings import get_settings
 
 CONSOLE = Console()
 
+
 def is_piped() -> bool:
     return not sys.stdout.isatty()
 

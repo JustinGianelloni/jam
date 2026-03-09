@@ -19,7 +19,7 @@ from cli.system import presenter as sys_presenter
 from cli.user import presenter as usr_presenter
 from core.progress import progress_context
 from core.settings import get_settings
-from models.user import State, User
+from models.user import State
 
 SETTINGS = get_settings()
 app = typer.Typer()
@@ -49,7 +49,7 @@ def list_users(
         None,
         "-c",
         "--cost-center",
-        help="Filter users by their cost center attribute."
+        help="Filter users by their cost center attribute.",
     ),
     title: str | None = typer.Option(
         None,
@@ -78,7 +78,7 @@ def list_users(
     ),
 ) -> None:
     """
-Returns a table of all users in JumpCloud filtered by any provided flags.
+    Returns a table of all users in JumpCloud filtered by any provided flags.
     """
     if not filters:
         filters = []
@@ -101,6 +101,43 @@ Returns a table of all users in JumpCloud filtered by any provided flags.
     usr_presenter.print_users(users, json)
     if csv_file:
         save_to_csv(users, csv_file, SETTINGS.csv_user_fields)
+
+
+def _resolve_user_ids(
+    user_ids: list[str] | None,
+    email: str | None,
+    username: str | None,
+    displayname: str | None,
+    cmd: str,
+) -> list[str]:
+    if all(v is None for v in (user_ids, email, username, displayname)):
+        print_error(f"No arguments specified. Use '{cmd} --help' for details.")
+        raise typer.Exit(1)
+    if (
+        sum(v is not None for v in (user_ids, email, username, displayname))
+        > 1
+    ):
+        print_error(
+            f"Too many arguments specified. Use '{cmd} --help' for details."
+        )
+        raise typer.Exit(1)
+    if user_ids:
+        return user_ids
+    for field, value in {
+        "email": email,
+        "username": username,
+        "displayname": displayname,
+    }.items():
+        if value:
+            try:
+                with progress_context():
+                    users = asyncio.run(usr_api.find_user(field, value))
+            except UserSearchEmptyError as e:
+                print_error(f"No user found with {e.field} '{e.value}'")
+                raise typer.Exit(1) from e
+            return [user.id for user in users]
+    print_error("An unknown error has occurred.")
+    raise typer.Exit(1)
 
 
 @app.command(name="get")
@@ -136,42 +173,16 @@ def get_user(
     ),
 ) -> None:
     """
-Return a JumpCloud user by their UUID, email, or username.
+    Return a JumpCloud user by their UUID, email, or username.
     """
-    def _search_user(field: str, value: str) -> list[User]:
-        try:
-            with progress_context():
-                users = asyncio.run(usr_api.find_user(field, value))
-        except UserSearchEmptyError as e:
-            print_error(f"No user found with {e.field} '{e.value}'")
-            raise typer.Exit(1) from e
-        return users
-
     user_ids = resolve_optional_list_argument(user_ids)
-    if all(v is None for v in (user_ids, email, username, displayname)):
-        msg = ("No arguments specified. "
-        "Use 'jam user get --help for details."
-        )
-        print_error(msg)
-        raise typer.Exit(1)
-    if sum(v is not None for v in (user_ids, email, username, displayname)) > 1:
-        msg = ("Too many arguments specified. "
-            "Use 'jam user get --help' for details.")
-        print_error(msg)
-        raise typer.Exit(1)
-    if email:
-        users = _search_user("email", email)
-    elif username:
-        users = _search_user("username", username)
-    elif displayname:
-        users = _search_user("displayname", displayname)
-    elif user_ids:
-        try:
-            with progress_context():
-                users = asyncio.run(usr_api.get_users(user_ids))
-        except UserNotFoundError as e:
-            print_error(f"No user found with ID '{e.user_id}'")
-            raise typer.Exit(1) from e
+    user_ids = _resolve_user_ids(user_ids, email, username, displayname, "get")
+    try:
+        with progress_context():
+            users = asyncio.run(usr_api.get_users(user_ids))
+    except UserNotFoundError as e:
+        print_error(f"No user found with ID '{e.user_id}'")
+        raise typer.Exit(1) from e
     usr_presenter.print_users(users, json)
 
 
@@ -210,37 +221,20 @@ def bound_systems(
     """
     Returns a table of all systems bound to a JumpCloud user.
     """
-    def _search_user(field: str, value: str) -> str:
-        try:
-            with progress_context():
-                users = asyncio.run(usr_api.find_user(field, value))
-            if len(users) > 1:
-                print_error(f"More than one user found with {field} '{value}'")
-                raise typer.Exit(1)
-        except UserSearchEmptyError as e:
-            print_error(f"No user found with {e.field} '{e.value}'")
-            raise typer.Exit(1) from e
-        return users[0].id
-
     user_id = resolve_optional_argument(user_id)
-    if all(v is None for v in (user_id, email, username, displayname)):
-        msg = ("No arguments specified. "
-        "Use 'jam user bound-systems --help for details."
+    user_ids = _resolve_user_ids(
+        [user_id] if user_id else None,
+        email,
+        username,
+        displayname,
+        "bound_systems",
+    )
+    if len(user_ids) > 1:
+        print_error(
+            "More than one user found with provided search parameters."
         )
-        print_error(msg)
         raise typer.Exit(1)
-    if sum(v is not None for v in (user_id, email, username, displayname)) > 1:
-        msg = ("Too many arguments specified. "
-            "Use 'jam user bound-systems --help' for details.")
-    if email:
-        user_id = _search_user("email", email)
-    elif username:
-        user_id = _search_user("username", username)
-    elif displayname:
-        user_id = _search_user("displayname", displayname)
-    if not user_id:
-        print_error("This message should never be seen.")
-        raise typer.Exit(1)
+    user_id = user_ids[0]
     try:
         system_ids = asyncio.run(usr_api.list_bound_systems(user_id))
     except UserNotFoundError as e:

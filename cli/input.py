@@ -69,7 +69,9 @@ def resolve_list_argument(values: list[str] | None) -> list[str]:
     return []
 
 
-def resolve_optional_list_argument(values: list[str] | None) -> list[str] | None:
+def resolve_optional_list_argument(
+    values: list[str] | None,
+) -> list[str] | None:
     """
     Resolve a list of optional arguments from direct input or stdin.
 
