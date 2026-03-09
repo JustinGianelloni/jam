@@ -19,7 +19,7 @@ from cli.system import presenter as sys_presenter
 from cli.user import presenter as usr_presenter
 from core.progress import progress_context
 from core.settings import get_settings
-from models.user import State
+from models.user import State, User
 
 SETTINGS = get_settings()
 app = typer.Typer()
@@ -109,7 +109,7 @@ def _resolve_user_ids(
     username: str | None,
     displayname: str | None,
     cmd: str,
-) -> list[str]:
+) -> tuple[list[str], list[User] | None] :
     if all(v is None for v in (user_ids, email, username, displayname)):
         print_error(f"No arguments specified. Use '{cmd} --help' for details.")
         raise typer.Exit(1)
@@ -122,7 +122,7 @@ def _resolve_user_ids(
         )
         raise typer.Exit(1)
     if user_ids:
-        return user_ids
+        return user_ids, None
     for field, value in {
         "email": email,
         "username": username,
@@ -135,7 +135,7 @@ def _resolve_user_ids(
             except UserSearchEmptyError as e:
                 print_error(f"No user found with {e.field} '{e.value}'")
                 raise typer.Exit(1) from e
-            return [user.id for user in users]
+            return [user.id for user in users], users
     print_error("An unknown error has occurred.")
     raise typer.Exit(1)
 
@@ -173,16 +173,17 @@ def get_user(
     ),
 ) -> None:
     """
-    Return a JumpCloud user by their UUID, email, or username.
+    Return a JumpCloud user by their ID, email, username, or displayname.
     """
     user_ids = resolve_optional_list_argument(user_ids)
-    user_ids = _resolve_user_ids(user_ids, email, username, displayname, "get")
-    try:
-        with progress_context():
-            users = asyncio.run(usr_api.get_users(user_ids))
-    except UserNotFoundError as e:
-        print_error(f"No user found with ID '{e.user_id}'")
-        raise typer.Exit(1) from e
+    user_ids, users = _resolve_user_ids(user_ids, email, username, displayname, "get")
+    if users is None:
+        try:
+            with progress_context():
+                users = asyncio.run(usr_api.get_users(user_ids))
+        except UserNotFoundError as e:
+            print_error(f"No user found with ID '{e.user_id}'")
+            raise typer.Exit(1) from e
     usr_presenter.print_users(users, json)
 
 
@@ -222,7 +223,7 @@ def bound_systems(
     Returns a table of all systems bound to a JumpCloud user.
     """
     user_id = resolve_optional_argument(user_id)
-    user_ids = _resolve_user_ids(
+    user_ids, _ = _resolve_user_ids(
         [user_id] if user_id else None,
         email,
         username,
