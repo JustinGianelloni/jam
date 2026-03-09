@@ -15,6 +15,12 @@ class SystemNotFoundError(ValueError):
         super().__init__()
 
 
+class NoSystemsFoundError(ValueError):
+    def __init__(self, filters: list[str]) -> None:
+        self.filters = filters
+        super().__init__()
+
+
 async def list_systems(filters: list[str] | None = None) -> list[System]:
     endpoint = "/systems"
     base_params = {

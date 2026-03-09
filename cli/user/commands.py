@@ -20,6 +20,7 @@ from cli.system import presenter as sys_presenter
 from cli.user import presenter as usr_presenter
 from core.progress import progress_context
 from core.settings import get_settings
+from models.user import EmployeeType, State
 
 SETTINGS = get_settings()
 app = typer.Typer()
@@ -54,13 +55,13 @@ def list_users(
         "--title",
         help="Filter users by their job title attribute, e.g. 'Data Engineer'",
     ),
-    state: str | None = typer.Option(
+    state: State | None = typer.Option(
         None,
         "--state",
         help="Filter users by their state in JumpCloud, e.g. "
         "'ACTIVATED', 'SUSPENDED', or 'STAGED'",
     ),
-    employee_type: str | None = typer.Option(
+    employee_type: EmployeeType | None = typer.Option(
         None,
         "--type",
         help="Filter users by their type in JumpCloud, e.g. "
