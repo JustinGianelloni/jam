@@ -38,8 +38,7 @@
     },
     "console_group_fields": {
       "ID": "id",
-      "Name": "name",
-      "Description": "description"
+      "Name": "name"
     },
     "csv_group_fields": {
       "ID": "id",

@@ -1,4 +1,5 @@
 import asyncio
+from http import HTTPStatus
 
 from core.client import get_client
 from core.progress import add_task, update_task
@@ -6,6 +7,24 @@ from core.settings import get_settings
 from models.group import Group
 
 SETTINGS = get_settings()
+
+
+class NoGroupsFoundError(ValueError):
+    def __init__(self, filters: list[str]) -> None:
+        self.filters = filters
+        super().__init__()
+
+
+class GroupNotFoundError(ValueError):
+    def __init__(self, group_id: str) -> None:
+        self.group_id = group_id
+        super().__init__()
+
+
+class NoGroupMembersFoundError(ValueError):
+    def __init__(self, group_id: str) -> None:
+        self.group_id = group_id
+        super().__init__()
 
 
 async def list_groups(filters: list[str]) -> list[Group]:
@@ -18,6 +37,8 @@ async def list_groups(filters: list[str]) -> list[Group]:
     response = await get_client().get(endpoint, params=first_params)
     response.raise_for_status()
     body = response.json()
+    if not body:
+        raise NoGroupsFoundError(filters)
     total = int(response.headers.get("x-total-count"))
     groups = [Group(**result) for result in body]
     if len(groups) == total:
@@ -46,8 +67,24 @@ async def list_groups(filters: list[str]) -> list[Group]:
 async def get_group(group_id: str) -> Group:
     endpoint = f"/v2/usergroups/{group_id}"
     response = await get_client().get(endpoint)
+    if response.status_code == HTTPStatus.BAD_REQUEST:
+        raise GroupNotFoundError(group_id)
     response.raise_for_status()
     return Group(**response.json())
+
+
+async def get_groups(group_ids: list[str]) -> list[Group]:
+    task_id = add_task(
+        f"Fetching {len(group_ids)} systems from JumpCloud",
+        total=len(group_ids),
+    )
+    tasks = [get_group(group_id) for group_id in group_ids]
+    groups: list[Group] = []
+    for task in asyncio.as_completed(tasks):
+        group = await task
+        groups.append(group)
+        update_task(task_id, advance=1)
+    return groups
 
 
 async def get_group_members(group_id: str) -> list[str]:
@@ -55,8 +92,12 @@ async def get_group_members(group_id: str) -> list[str]:
     base_params = {"limit": SETTINGS.limit}
     first_params = {**base_params, "skip": 0}
     response = await get_client().get(endpoint, params=first_params)
+    if response.status_code == HTTPStatus.BAD_REQUEST:
+        raise GroupNotFoundError(group_id)
     response.raise_for_status()
     body = response.json()
+    if not body:
+        raise NoGroupMembersFoundError(group_id)
     total = int(response.headers.get("x-total-count"))
     users = [result["to"]["id"] for result in body]
     if len(users) == total:

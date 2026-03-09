@@ -2,7 +2,6 @@ import asyncio
 from pathlib import Path
 
 import typer
-from httpx import HTTPError
 
 from api import groups as grp_api
 from api import users as usr_api
@@ -27,8 +26,13 @@ app = typer.Typer()
 def get_group_members(
     group_ids: list[str] | None = typer.Argument(
         None,
-        help="A valid UUID for a JumpCloud group, e.g. "
-        "'689e1335e907ee000186085f'",
+        help="A valid ID for a JumpCloud group",
+    ),
+    name: str | None = typer.Option(
+        None,
+        "-n",
+        "--name",
+        help="An exact or partial match for a JumpCloud group name."
     ),
     csv_file: str | None = typer.Option(
         None,

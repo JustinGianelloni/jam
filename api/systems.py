@@ -92,7 +92,7 @@ async def get_systems(system_ids: list[str]) -> list[System]:
     for task in asyncio.as_completed(tasks):
         system = await task
         systems.append(system)
-        update_task(task_id, advance=len(system_ids))
+        update_task(task_id, advance=1)
     return systems
 
 
@@ -125,6 +125,8 @@ async def list_associations(target: str, system_id: str) -> list[Association]:
     endpoint = f"/v2/systems/{system_id}/associations"
     params = {"targets": target}
     response = await get_client().get(endpoint, params=params)
+    if response.status_code == HTTPStatus.BAD_REQUEST:
+        raise SystemNotFoundError(system_id)
     response.raise_for_status()
     body = response.json()
     if not body:

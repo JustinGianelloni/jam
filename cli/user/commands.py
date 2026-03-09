@@ -169,7 +169,7 @@ def get_user(
         "-j",
         "--json",
         is_flag=True,
-        help="Return a full JSON model of the user.",
+        help="Return a full JSON model of the user(s).",
     ),
 ) -> None:
     """
@@ -177,7 +177,7 @@ def get_user(
     """
     user_ids = resolve_optional_list_argument(user_ids)
     user_ids, users = _resolve_user_ids(
-        user_ids, email, username, displayname, "get"
+        user_ids, email, username, displayname, "jam user get"
     )
     if users is None:
         try:
@@ -230,7 +230,7 @@ def bound_systems(
         email,
         username,
         displayname,
-        "bound_systems",
+        "jam user bound_systems",
     )
     if len(user_ids) > 1:
         print_error(

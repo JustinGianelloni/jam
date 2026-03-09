@@ -131,7 +131,7 @@ def get_system(
         "-j",
         "--json",
         is_flag=True,
-        help="Return a full JSON model of the system.",
+        help="Return a full JSON model of the system(s).",
     ),
 ) -> None:
     """
@@ -139,7 +139,7 @@ def get_system(
     """
     system_ids = resolve_optional_list_argument(system_ids)
     system_ids, systems = _resolve_system_ids(
-        system_ids, hostname, serial, "get"
+        system_ids, hostname, serial, "jam system get"
     )
     if systems is None:
         try:
@@ -173,7 +173,7 @@ hostname, or serial number.
     """
     system_id = resolve_optional_argument(system_id)
     system_ids, _ = _resolve_system_ids(
-        [system_id] if system_id else None, hostname, serial, "fde-key"
+        [system_id] if system_id else None, hostname, serial, "jam system fde-key"
     )
     if len(system_ids) > 1:
         print_error(
@@ -220,7 +220,7 @@ def list_user_associations(
     """
     system_id = resolve_optional_argument(system_id)
     system_ids, _ = _resolve_system_ids(
-        [system_id] if system_id else None, hostname, serial, "bound-users"
+        [system_id] if system_id else None, hostname, serial, "jam system bound-users"
     )
     if len(system_ids) > 1:
         print_error(
