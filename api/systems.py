@@ -21,7 +21,20 @@ class NoSystemsFoundError(ValueError):
         super().__init__()
 
 
-async def list_systems(filters: list[str] | None = None) -> list[System]:
+class SystemSearchEmptyError(ValueError):
+    def __init__(self, field: str, value: str) -> None:
+        self.field = field
+        self.value = value
+        super().__init__()
+
+
+class NoAssociationsFoundError(ValueError):
+    def __init__(self, system_id: str) -> None:
+        self.system_id = system_id
+        super().__init__()
+
+
+async def list_systems(filters: list[str]) -> list[System]:
     endpoint = "/systems"
     base_params = {
         "limit": SETTINGS.limit,
@@ -33,6 +46,8 @@ async def list_systems(filters: list[str] | None = None) -> list[System]:
     response = await get_client().get(endpoint, params=first_params)
     response.raise_for_status()
     body = response.json()
+    if not body.get("results"):
+        raise NoSystemsFoundError(filters)
     total = body.get("totalCount", 0)
     systems = [System(**result) for result in body.get("results")]
     if len(systems) == total:
@@ -84,21 +99,25 @@ async def get_systems(system_ids: list[str]) -> list[System]:
 async def get_fde_key(system_id: str) -> str:
     endpoint = f"/v2/systems/{system_id}/fdekey"
     response = await get_client().get(endpoint)
+    if response.status_code == HTTPStatus.BAD_REQUEST:
+        raise SystemNotFoundError(system_id)
     response.raise_for_status()
     return response.json().get("key")
 
 
-async def find_system(query: str) -> list[System]:
+async def find_system(field: str, value: str) -> list[System]:
     endpoint = "/search/systems"
     data = {
         "searchFilter": {
-            "searchTerm": query,
-            "fields": ["hostname", "serialNumber"],
+            "searchTerm": value,
+            "fields": [field],
         },
     }
     response = await get_client().post(endpoint, json=data)
     response.raise_for_status()
     body = response.json()
+    if not body.get("results"):
+        raise SystemSearchEmptyError(field, value)
     return [System(**result) for result in body.get("results")]
 
 
@@ -108,4 +127,6 @@ async def list_associations(target: str, system_id: str) -> list[Association]:
     response = await get_client().get(endpoint, params=params)
     response.raise_for_status()
     body = response.json()
+    if not body:
+        raise NoAssociationsFoundError(system_id)
     return [Association(**association) for association in body]

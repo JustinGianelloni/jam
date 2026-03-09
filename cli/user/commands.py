@@ -109,7 +109,7 @@ def _resolve_user_ids(
     username: str | None,
     displayname: str | None,
     cmd: str,
-) -> tuple[list[str], list[User] | None] :
+) -> tuple[list[str], list[User] | None]:
     if all(v is None for v in (user_ids, email, username, displayname)):
         print_error(f"No arguments specified. Use '{cmd} --help' for details.")
         raise typer.Exit(1)
@@ -176,7 +176,9 @@ def get_user(
     Return a JumpCloud user by their ID, email, username, or displayname.
     """
     user_ids = resolve_optional_list_argument(user_ids)
-    user_ids, users = _resolve_user_ids(user_ids, email, username, displayname, "get")
+    user_ids, users = _resolve_user_ids(
+        user_ids, email, username, displayname, "get"
+    )
     if users is None:
         try:
             with progress_context():
@@ -235,9 +237,8 @@ def bound_systems(
             "More than one user found with provided search parameters."
         )
         raise typer.Exit(1)
-    user_id = user_ids[0]
     try:
-        system_ids = asyncio.run(usr_api.list_bound_systems(user_id))
+        system_ids = asyncio.run(usr_api.list_bound_systems(user_ids[0]))
     except UserNotFoundError as e:
         print_error(f"No user found with ID '{e.user_id}'")
         raise typer.Exit(1) from e
