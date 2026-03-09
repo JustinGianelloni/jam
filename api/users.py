@@ -21,9 +21,10 @@ class NoUsersFoundError(ValueError):
         super().__init__()
 
 
-class UserEmailNotFoundError(ValueError):
-    def __init__(self, email: str) -> None:
-        self.email = email
+class UserSearchEmptyError(ValueError):
+    def __init__(self, field: str, value: str) -> None:
+        self.field = field
+        self.value = value
         super().__init__()
 
 
@@ -153,19 +154,19 @@ async def unlock_user(user_id: str) -> None:
     response.raise_for_status()
 
 
-async def find_user(email: str) -> list[User]:
+async def find_user(field: str, value: str) -> list[User]:
     endpoint = "/search/systemusers"
     data = {
         "searchFilter": {
-            "searchTerm": email,
-            "fields": ["email"],
+            "searchTerm": value,
+            "fields": [field],
         },
     }
     response = await get_client().post(endpoint, json=data)
     response.raise_for_status()
     body = response.json()
     if not body.get("results"):
-        raise UserEmailNotFoundError(email)
+        raise UserSearchEmptyError(field, value)
     return [User(**result) for result in body.get("results")]
 
 

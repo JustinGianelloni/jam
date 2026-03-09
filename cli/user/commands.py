@@ -7,20 +7,19 @@ from api import users as usr_api
 from api.systems import SystemNotFoundError
 from api.users import (
     NoUsersFoundError,
-    UserEmailNotFoundError,
     UserNotFoundError,
+    UserSearchEmptyError,
 )
 from cli.input import (
-    resolve_argument,
-    resolve_list_argument,
     resolve_optional_argument,
+    resolve_optional_list_argument,
 )
 from cli.output import print_error, save_to_csv
 from cli.system import presenter as sys_presenter
 from cli.user import presenter as usr_presenter
 from core.progress import progress_context
 from core.settings import get_settings
-from models.user import EmployeeType, State
+from models.user import State, User
 
 SETTINGS = get_settings()
 app = typer.Typer()
@@ -30,6 +29,7 @@ app = typer.Typer()
 def list_users(
     filters: list[str] | None = typer.Option(
         None,
+        "-f",
         "--filter",
         help="Any number of filters using JumpCloud's filter syntax, e.g. "
         "'employeeType:$eq:Contractor'",
@@ -41,31 +41,33 @@ def list_users(
     ),
     department: str | None = typer.Option(
         None,
+        "-d",
         "--department",
-        help="Filter users by their department attribute, e.g. 'Engineering'",
+        help="Filter users by their department attribute.",
     ),
     cost_center: str | None = typer.Option(
         None,
+        "-c",
         "--cost-center",
-        help="Filter users by their cost center attribute, e.g. "
-        "'Data Engineering'",
+        help="Filter users by their cost center attribute."
     ),
     title: str | None = typer.Option(
         None,
+        "-t",
         "--title",
-        help="Filter users by their job title attribute, e.g. 'Data Engineer'",
+        help="Filter users by their job title attribute.",
     ),
     state: State | None = typer.Option(
         None,
+        "-s",
         "--state",
-        help="Filter users by their state in JumpCloud, e.g. "
-        "'ACTIVATED', 'SUSPENDED', or 'STAGED'",
+        help="Filter users by their state in JumpCloud.",
     ),
-    employee_type: EmployeeType | None = typer.Option(
+    employee_type: str | None = typer.Option(
         None,
+        "-t",
         "--type",
-        help="Filter users by their type in JumpCloud, e.g. "
-        "'Full Time', 'Contractor', or 'Service'",
+        help="Filter users by their type in JumpCloud.",
     ),
     json: bool = typer.Option(
         False,
@@ -76,14 +78,7 @@ def list_users(
     ),
 ) -> None:
     """
-List all system users in JumpCloud.
-Users can be filtered by specifying a flag with a value or by using \
-JumpCloud's filter syntax.
-For example, to filter for all activated users in the engineering department, \
-you could use either '--state ACTIVATED --department Engineering' or \
-'--filter state:$eq:ACTIVATED --filter department:$eq:Engineering'.
-If both flag-based filters and filter syntax are used together, they will be \
-combined into a single list of filters.
+Returns a table of all users in JumpCloud filtered by any provided flags.
     """
     if not filters:
         filters = []
@@ -112,8 +107,25 @@ combined into a single list of filters.
 def get_user(
     user_ids: list[str] | None = typer.Argument(
         None,
-        help="A valid UUID for a JumpCloud user, e.g. "
-        "'685cb0f6ef36c7bd8ac56c24'",
+        help="One or more valid JumpCloud user IDs.",
+    ),
+    email: str | None = typer.Option(
+        None,
+        "-e",
+        "--email",
+        help="A valid email address for a JumpCloud user.",
+    ),
+    username: str | None = typer.Option(
+        None,
+        "-u",
+        "--username",
+        help="A valid username for a JumpCloud user.",
+    ),
+    displayname: str | None = typer.Option(
+        None,
+        "-d",
+        "--displayname",
+        help="A valid displayname for a JumpCloud user.",
     ),
     json: bool = typer.Option(
         False,
@@ -124,44 +136,42 @@ def get_user(
     ),
 ) -> None:
     """
-Get a JumpCloud system user by their UUID. Use 'find-user' to get a user's \
-UUID by their email address.
+Return a JumpCloud user by their UUID, email, or username.
     """
-    user_ids = resolve_list_argument(user_ids)
-    try:
-        with progress_context():
-            users = asyncio.run(usr_api.get_users(user_ids))
-    except UserNotFoundError as e:
-        print_error(f"No user found with ID '{e.user_id}'")
-        raise typer.Exit(1) from e
-    usr_presenter.print_users(users, json)
+    def _search_user(field: str, value: str) -> list[User]:
+        try:
+            with progress_context():
+                users = asyncio.run(usr_api.find_user(field, value))
+        except UserSearchEmptyError as e:
+            print_error(f"No user found with {e.field} '{e.value}'")
+            raise typer.Exit(1) from e
+        return users
 
-
-@app.command(name="find")
-def find_user(
-    email: str | None = typer.Argument(
-        None,
-        help="A valid email address for a JumpCloud user.",
-    ),
-    json: bool = typer.Option(
-        False,
-        "-j",
-        "--json",
-        is_flag=True,
-        help="Return a full JSON model of the user(s).",
-    ),
-) -> None:
-    """
-Find a JumpCloud user's UUID by their email address. If the query returns \
-multiple results, a table of matching users will be displayed instead of a \
-single UUID.
-    """
-    email = resolve_argument(email, "Email")
-    try:
-        users = asyncio.run(usr_api.find_user(email))
-    except UserEmailNotFoundError as e:
-        print_error(f"No user found with email '{e.email}'")
-        raise typer.Exit(1) from e
+    user_ids = resolve_optional_list_argument(user_ids)
+    if all(v is None for v in (user_ids, email, username, displayname)):
+        msg = ("No arguments specified. "
+        "Use 'jam user get --help for details."
+        )
+        print_error(msg)
+        raise typer.Exit(1)
+    if sum(v is not None for v in (user_ids, email, username, displayname)) > 1:
+        msg = ("Too many arguments specified. "
+            "Use 'jam user get --help' for details.")
+        print_error(msg)
+        raise typer.Exit(1)
+    if email:
+        users = _search_user("email", email)
+    elif username:
+        users = _search_user("username", username)
+    elif displayname:
+        users = _search_user("displayname", displayname)
+    elif user_ids:
+        try:
+            with progress_context():
+                users = asyncio.run(usr_api.get_users(user_ids))
+        except UserNotFoundError as e:
+            print_error(f"No user found with ID '{e.user_id}'")
+            raise typer.Exit(1) from e
     usr_presenter.print_users(users, json)
 
 
@@ -169,14 +179,25 @@ single UUID.
 def bound_systems(
     user_id: str | None = typer.Argument(
         None,
-        help="A valid UUID for a JumpCloud user, e.g. "
-        "'685cb0f6ef36c7bd8ac56c24'",
+        help="A valid JumpCloud user ID.",
     ),
     email: str | None = typer.Option(
         None,
         "-e",
         "--email",
         help="A valid email address for a JumpCloud user.",
+    ),
+    username: str | None = typer.Option(
+        None,
+        "-u",
+        "--username",
+        help="A valid username for a JumpCloud user.",
+    ),
+    displayname: str | None = typer.Option(
+        None,
+        "-d",
+        "--displayname",
+        help="A valid displayname for a JumpCloud user.",
     ),
     json: bool = typer.Option(
         False,
@@ -189,28 +210,37 @@ def bound_systems(
     """
     Returns a table of all systems bound to a JumpCloud user.
     """
-    user_id = resolve_optional_argument(user_id)
-    if user_id and email:
-        msg = ("'--user_id' and '--email' are mutually exclusive. "
-            "Use 'jam user bound-systems --help' for details.")
-        raise typer.BadParameter(msg)
-    if not user_id and not email:
-        msg = ("'--user_id' or '--email' must be specified. "
-            "Use 'jam user bound-systems --help' for details.")
-        raise typer.BadParameter(msg, param_hint="'--user_id'")
-    if email:
+    def _search_user(field: str, value: str) -> str:
         try:
-            user_ids = asyncio.run(usr_api.find_user(email))
-            if len(user_ids) > 1:
-                print_error(f"More than one user for for email '{email}'")
+            with progress_context():
+                users = asyncio.run(usr_api.find_user(field, value))
+            if len(users) > 1:
+                print_error(f"More than one user found with {field} '{value}'")
                 raise typer.Exit(1)
-            user_id = user_ids[0].id
-        except UserEmailNotFoundError as e:
-            print_error(f"No user found with email '{e.email}'")
+        except UserSearchEmptyError as e:
+            print_error(f"No user found with {e.field} '{e.value}'")
             raise typer.Exit(1) from e
+        return users[0].id
+
+    user_id = resolve_optional_argument(user_id)
+    if all(v is None for v in (user_id, email, username, displayname)):
+        msg = ("No arguments specified. "
+        "Use 'jam user bound-systems --help for details."
+        )
+        print_error(msg)
+        raise typer.Exit(1)
+    if sum(v is not None for v in (user_id, email, username, displayname)) > 1:
+        msg = ("Too many arguments specified. "
+            "Use 'jam user bound-systems --help' for details.")
+    if email:
+        user_id = _search_user("email", email)
+    elif username:
+        user_id = _search_user("username", username)
+    elif displayname:
+        user_id = _search_user("displayname", displayname)
     if not user_id:
-        msg = "'--user_id' or '--email' must be specified."
-        raise typer.BadParameter(msg, param_hint="'--user_id'")
+        print_error("This message should never be seen.")
+        raise typer.Exit(1)
     try:
         system_ids = asyncio.run(usr_api.list_bound_systems(user_id))
     except UserNotFoundError as e:

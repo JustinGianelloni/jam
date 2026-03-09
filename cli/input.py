@@ -69,6 +69,27 @@ def resolve_list_argument(values: list[str] | None) -> list[str]:
     return []
 
 
+def resolve_optional_list_argument(values: list[str] | None) -> list[str] | None:
+    """
+    Resolve a list of optional arguments from direct input or stdin.
+
+    Stdin input is split by newlines to support multiple values.
+
+    Args:
+        values: The values passed as CLI arguments, or None.
+
+    Returns:
+        The resolved list of values.
+    """
+    if values:
+        return values
+    if not sys.stdin.isatty():
+        stdin_value = sys.stdin.read().strip()
+        if stdin_value:
+            return stdin_value.split("\n")
+    return None
+
+
 def read_csv_list(path: Path) -> list[str]:
     with path.open("r") as file:
         reader = csv.reader(file)
