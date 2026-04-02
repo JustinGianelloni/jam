@@ -107,6 +107,7 @@ func listMembers(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
+	csv, _ := cmd.Flags().GetString("csv")
 	switch len(members) {
 	case 0:
 		return fmt.Errorf("No members found for the specified group(s): %s", strings.Join(args, ", "))
@@ -118,6 +119,6 @@ func listMembers(cmd *cobra.Command, args []string) error {
 		manager_name := fmt.Sprintf("%s, %s", manager.LastName, manager.FirstName)
 		return cli.PrintUserTable(members[0], manager_name)
 	default:
-		return cli.PrintUsersTable(members, common.GetUsersColumns(cmd), "")
+		return cli.PrintUsersTable(members, common.GetUsersColumns(cmd), csv)
 	}
 }
