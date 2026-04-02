@@ -57,7 +57,7 @@ func listMembers(cmd *cobra.Command, args []string) error {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			m, err := client.UserGroupMembers(cmd.Context(), args[0])
+			m, err := client.UserGroupMembers(cmd.Context(), args[i])
 			if err != nil {
 				results <- result{num: i, err: err}
 				return
@@ -107,6 +107,7 @@ func listMembers(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
+	csv, _ := cmd.Flags().GetString("csv")
 	switch len(members) {
 	case 0:
 		return fmt.Errorf("No members found for the specified group(s): %s", strings.Join(args, ", "))
@@ -118,6 +119,6 @@ func listMembers(cmd *cobra.Command, args []string) error {
 		manager_name := fmt.Sprintf("%s, %s", manager.LastName, manager.FirstName)
 		return cli.PrintUserTable(members[0], manager_name)
 	default:
-		return cli.PrintUsersTable(members, common.GetUsersColumns(cmd), "")
+		return cli.PrintUsersTable(members, common.GetUsersColumns(cmd), csv)
 	}
 }
