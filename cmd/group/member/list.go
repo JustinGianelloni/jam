@@ -57,7 +57,7 @@ func listMembers(cmd *cobra.Command, args []string) error {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			m, err := client.UserGroupMembers(cmd.Context(), args[0])
+			m, err := client.UserGroupMembers(cmd.Context(), args[i])
 			if err != nil {
 				results <- result{num: i, err: err}
 				return
