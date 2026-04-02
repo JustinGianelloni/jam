@@ -3,56 +3,86 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: windows
+            goarch: amd64
+          - goos: windows
+            goarch: arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          ext=""
+          if [ "$GOOS" = "windows" ]; then ext=".exe"; fi
+          output="jam_${GOOS}_${GOARCH}${ext}"
+          go build -ldflags="-s -w" -o "$output" .
+          echo "ARTIFACT=$output" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jam_${{ matrix.goos }}_${{ matrix.goarch }}
+          path: ${{ env.ARTIFACT }}
+
   release:
+    needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Extract version from tag
-        id: version
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          
-          # Verify tag version matches pyproject.toml
-          PYPROJECT_VERSION=$(grep -oP '^version = "\K[^"]+' pyproject.toml)
-          if [[ "$VERSION" != "$PYPROJECT_VERSION" ]]; then
-            echo "Error: Tag version ($VERSION) does not match pyproject.toml version ($PYPROJECT_VERSION)"
-            exit 1
-          fi
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
 
-      - name: Generate release notes
-        id: notes
+      - name: Generate changelog
+        id: changelog
         run: |
-          # Get previous tag for changelog
-          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-          
-          if [[ -n "$PREV_TAG" ]]; then
-            echo "Generating changelog from $PREV_TAG to ${{ github.ref_name }}"
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)" "$PREV_TAG"..HEAD)
+          previous_tag=$(git tag --sort=-v:refname | sed -n '2p')
+          if [ -n "$previous_tag" ]; then
+            changelog=$(git log --pretty=format:"- %s" "${previous_tag}..HEAD")
           else
-            echo "No previous tag found, generating full changelog"
-            CHANGELOG=$(git log --pretty=format:"- %s (%h)")
+            changelog=$(git log --pretty=format:"- %s")
           fi
-          
-          # Write to file for multiline output
-          echo "$CHANGELOG" > changelog.txt
+          {
+            echo "CHANGELOG<<EOF"
+            echo "$changelog"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
 
-      - name: Create GitHub Release
+      - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          name: JAM v${{ steps.version.outputs.VERSION }}
-          body_path: changelog.txt
-          draft: false
-          prerelease: ${{ contains(github.ref_name, '-') }}
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            ## Changes
 
+            ${{ env.CHANGELOG }}
+          files: artifacts/*
