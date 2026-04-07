@@ -64,6 +64,7 @@ var userTableRows = []string{
 	"ID",
 	"EmployeeIdentifier",
 	"State",
+	"EmployeeType",
 	"Name",
 	"DisplayName",
 	"Username",
