@@ -8,14 +8,14 @@ A command-line interface for JumpCloud, written in Go.
 - **System management** - list, get, find, and view bound users
 - **Group management** - list groups and members
 - **Application management** - list apps and assigned groups
-- **Piping support** - chain commands together (`jam user list | jam user get`)
+- **Piping support** - chain commands together (`jam user find <name> | jam user bound-systems`)
 - **Multiple output formats** - tables, JSON (`--json`), and CSV (`--csv path`)
 - **Concurrent API requests** - fast bulk lookups
 - **1Password integration** - secure credential storage via the 1Password SDK
 
 ## Prerequisites
 
-- macOS or Linux
+- macOS, Linux, or Windows
 - [JumpCloud](https://jumpcloud.com) admin account with API OAuth credentials
 - [1Password](https://1password.com) desktop app (for credential management)
 
@@ -117,9 +117,18 @@ Most list commands support:
 When output is piped, jam emits plain IDs (one per line) instead of tables:
 
 ```bash
-jam user list -d Engineering | jam user bound-systems
+jam user find John | jam user bound-systems
 jam group list -n Admins | jam group member list
 ```
+
+### Updating
+
+```bash
+jam version                        # Print current version
+jam update                         # Update to the latest version
+```
+
+Jam automatically checks for new versions in the background and will display a notice when an update is available.
 
 ## JumpCloud API credentials
 
