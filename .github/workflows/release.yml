@@ -64,7 +64,7 @@ jobs:
             export CXX="zig c++ -target ${{ matrix.zig_target }}"
           fi
 
-          go build -ldflags="-s -w" -o "$output" .
+          go build -ldflags="-s -w -X github.com/justingianelloni/jam/internal/update.Version=${GITHUB_REF_NAME}" -o "$output" .
           echo "ARTIFACT=$output" >> "$GITHUB_ENV"
 
       - uses: actions/upload-artifact@v4

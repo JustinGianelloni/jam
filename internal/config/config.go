@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	op "github.com/1password/onepassword-sdk-go"
+	"github.com/justingianelloni/jam/internal/update"
 	"github.com/spf13/viper"
 )
 
@@ -25,7 +26,7 @@ func Load(ctx context.Context) (*Credentials, error) {
 	}
 	opClient, err := op.NewClient(ctx,
 		op.WithDesktopAppIntegration(account),
-		op.WithIntegrationInfo("jam", "v0.1.0"),
+		op.WithIntegrationInfo("jam", update.Version),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("connecting to 1Password: %w", err)

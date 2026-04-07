@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/justingianelloni/jam/config"
+	"github.com/justingianelloni/jam/internal/config"
 )
 
 const (

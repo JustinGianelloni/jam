@@ -9,7 +9,7 @@ import (
 	"github.com/justingianelloni/jam/api"
 	"github.com/justingianelloni/jam/cli"
 	"github.com/justingianelloni/jam/cmd/common"
-	"github.com/justingianelloni/jam/config"
+	"github.com/justingianelloni/jam/internal/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
